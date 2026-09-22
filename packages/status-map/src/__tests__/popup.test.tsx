@@ -186,6 +186,44 @@ describe('bulle au survol', () => {
     expect(screen.queryByRole('heading', { name: 'a' })).not.toBeInTheDocument();
   });
 
+  it('ouvre la bulle quand le marqueur reçoit le focus clavier', () => {
+    const { container } = renderMap();
+    const marker = markerAt(container, 0);
+
+    expect(marker).toHaveAttribute('tabindex', '0');
+
+    fireEvent.focusIn(marker);
+    expect(screen.getByRole('heading', { name: 'a' })).toBeInTheDocument();
+  });
+
+  it('referme après le délai quand le focus quitte le marqueur', () => {
+    const { container } = renderMap();
+    const marker = markerAt(container, 0);
+    fireEvent.focusIn(marker);
+
+    fireEvent.focusOut(marker, { relatedTarget: container });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(screen.queryByRole('heading', { name: 'a' })).not.toBeInTheDocument();
+  });
+
+  it('garde la bulle quand le focus y entre', () => {
+    const { container } = renderMap();
+    const marker = markerAt(container, 0);
+    fireEvent.focusIn(marker);
+
+    const popup = popupElement(container);
+    if (!popup) throw new Error('la bulle devrait être ouverte');
+    fireEvent.focusOut(marker, { relatedTarget: popup.querySelector('button') });
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    expect(screen.getByRole('heading', { name: 'a' })).toBeInTheDocument();
+  });
+
   it('remonte le clic sur un marqueur sans naviguer', () => {
     const onSelect = vi.fn();
     const { container } = renderMap({ onSelect });

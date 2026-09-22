@@ -16,11 +16,16 @@
   --sm-popup-bg: #ffffff;
   --sm-popup-text: #172b4d;
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
+/*
+ * Le mode système ne pose aucun attribut : la feuille suit
+ * prefers-color-scheme toute seule, donc aucun écran n'attend le JavaScript
+ * pour connaître sa couleur. Un choix explicite pose data-theme et l'emporte.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #0f151d;
     --surface: #161d27;
     --text: #e6ebf3;
@@ -36,7 +41,29 @@
     --sm-attribution-text: #9aa8bd;
     --sm-popup-bg: #1d2733;
     --sm-popup-text: #e6ebf3;
+
+    color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f151d;
+  --surface: #161d27;
+  --text: #e6ebf3;
+  --muted: #9aa8bd;
+  --border: #253040;
+  --notice-warning-bg: #3a2c12;
+  --notice-warning-text: #f2c879;
+  --notice-error-bg: #3b1a1f;
+  --notice-error-text: #ff9aa5;
+
+  --sm-map-bg: #1b2430;
+  --sm-attribution-bg: rgb(16 22 30 / 85%);
+  --sm-attribution-text: #9aa8bd;
+  --sm-popup-bg: #1d2733;
+  --sm-popup-text: #e6ebf3;
+
+  color-scheme: dark;
 }
 
 * {
@@ -100,9 +127,15 @@ body {
 
 /* --- Panneau --- */
 
+/*
+ * Le panneau est rendu après la carte, et ramené à gauche par le CSS.
+ * Dans l'ordre du DOM, la carte doit venir avant deux cent quarante boutons
+ * de liste, sinon on ne l'atteint pas au clavier.
+ */
 .panel {
   display: flex;
   width: 320px;
+  order: -1;
   flex: none;
   flex-direction: column;
   border-right: 1px solid var(--border);
@@ -349,18 +382,78 @@ body {
 
 @media (max-width: 860px) {
   .app__body {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .panel {
     width: auto;
-    max-height: 45%;
+    max-height: 48%;
+    order: 0;
     border-right: 0;
     border-top: 1px solid var(--border);
   }
 
   .app__map {
     min-height: 240px;
+  }
+
+  /*
+   * L'en-tête doit rester une bande, pas un bloc : sur un téléphone, chaque
+   * ligne qu'il prend est une ligne de moins pour la carte.
+   */
+  .app__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .app__title {
+    font-size: 17px;
+  }
+
+  .app__tagline {
+    font-size: 12px;
+  }
+
+  .app__aside {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .app__count {
+    display: none;
+  }
+
+  .legend {
+    padding: 10px 14px;
+  }
+
+  /* La règle de couleur est une explication : sur un écran étroit, la liste passe avant. */
+  .legend__rule {
+    display: none;
+  }
+
+  .panel__list {
+    min-height: 140px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app__tagline {
+    display: none;
+  }
+
+  .sim__toggle {
+    padding: 6px 11px;
+  }
+
+  .theme__option {
+    padding: 4px 9px;
+  }
+
+  .panel__controls {
+    padding: 12px 14px;
   }
 }
 
@@ -620,4 +713,180 @@ body {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* --- Thème, légende, chargement --- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.theme {
+  display: flex;
+  margin: 0;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.theme__option {
+  padding: 4px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.theme__option[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.theme__option:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.legend {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.legend__list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.legend__marker {
+  display: flex;
+  width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #10161f;
+}
+
+.legend__marker svg {
+  width: 60%;
+  height: 60%;
+}
+
+.legend__rule {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.skeleton {
+  margin: 0;
+  padding: 6px;
+  flex: 1;
+  overflow: hidden;
+  list-style: none;
+}
+
+.skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+}
+
+.skeleton__dot,
+.skeleton__line {
+  border-radius: 999px;
+  background: var(--border);
+  animation: skeleton-breathe 1.4s ease-in-out infinite;
+}
+
+.skeleton__dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.skeleton__lines {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.skeleton__line {
+  height: 8px;
+}
+
+.skeleton__line--short {
+  width: 42%;
+  height: 7px;
+  opacity: 0.6;
+}
+
+@keyframes skeleton-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton__dot,
+  .skeleton__line {
+    animation: none;
+  }
+}
+
+.app__map {
+  position: relative;
+}
+
+.app__map-empty {
+  position: absolute;
+  z-index: 500;
+  top: 16px;
+  left: 50%;
+  margin: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgb(16 22 30 / 12%);
+  font-size: 12px;
+  transform: translateX(-50%);
+}
+
+.panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }

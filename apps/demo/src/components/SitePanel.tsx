@@ -2,6 +2,8 @@ import { useId } from 'react';
 import type { StatusRegistry } from '@jeremyprat/status-map';
 import type { Site, SiteStatus, SiteTag } from '../data/types';
 import type { SiteFilters, StatusCounts } from '../filters';
+import { Legend } from './Legend';
+import { PanelSkeleton } from './PanelSkeleton';
 import { SiteListItem } from './SiteListItem';
 import { StatusCounters } from './StatusCounters';
 import { TagFilter } from './TagFilter';
@@ -15,6 +17,7 @@ interface SitePanelProps {
   filtered: boolean;
   selectedId: string | null;
   locale: string;
+  loading: boolean;
   onSearch: (search: string) => void;
   onToggleStatus: (status: SiteStatus) => void;
   onToggleTag: (tag: SiteTag) => void;
@@ -31,6 +34,7 @@ export function SitePanel({
   filtered,
   selectedId,
   locale,
+  loading,
   onSearch,
   onToggleStatus,
   onToggleTag,
@@ -70,17 +74,24 @@ export function SitePanel({
 
       <div className="panel__summary">
         <p className="panel__count">
-          {sites.length} sur {total}
+          {loading ? 'Chargement du parc' : `${sites.length} sur ${total}`}
         </p>
-        {filtered && (
+        {filtered && !loading && (
           <button type="button" className="panel__reset" onClick={onReset}>
             Tout effacer
           </button>
         )}
       </div>
 
-      {sites.length === 0 ? (
-        <p className="panel__empty">Aucun site ne correspond à ces filtres.</p>
+      {loading ? (
+        <PanelSkeleton />
+      ) : sites.length === 0 ? (
+        <p className="panel__empty">
+          Aucun site ne correspond à ces filtres.
+          <button type="button" className="panel__reset" onClick={onReset}>
+            Tout effacer
+          </button>
+        </p>
       ) : (
         <ul className="panel__list">
           {sites.map((site) => {
@@ -98,6 +109,8 @@ export function SitePanel({
           })}
         </ul>
       )}
+
+      <Legend statuses={statuses} />
     </aside>
   );
 }

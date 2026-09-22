@@ -253,4 +253,54 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
 
     if (!instance.getBounds().contains(marker.getLatLng())) instance.panTo(marker.getLatLng());
   }, [map, mapRef, selectedId]);
+
+  /*
+   * Chemin clavier vers la bulle.
+   *
+   * Leaflet rend les marqueurs navigables au tabulateur, mais une bulle qui ne
+   * s'ouvre qu'au survol reste hors d'atteinte sans souris. La délégation sur
+   * le conteneur survit à la recréation des éléments par le regroupement, et
+   * le marqueur est retrouvé par identité d'élément : rien n'est stocké dans
+   * le DOM pour ça.
+   */
+  useEffect(() => {
+    const instance = mapRef.current;
+    if (!instance) return;
+
+    const container = instance.getContainer();
+    const knownItems = itemsRef.current;
+
+    const entryAt = (target: EventTarget | null): [string, L.Marker] | null => {
+      if (!(target instanceof Element)) return null;
+
+      const element = target.closest('.sm-marker');
+      if (!element) return null;
+
+      for (const entry of markersRef.current) {
+        if (entry[1].getElement() === element) return entry;
+      }
+      return null;
+    };
+
+    const onFocus = (event: FocusEvent) => {
+      const entry = entryAt(event.target);
+      if (!entry) return;
+
+      const item = knownItems.get(entry[0]);
+      if (item) onEnterRef.current?.(item, entry[1].getLatLng());
+    };
+
+    const onBlur = (event: FocusEvent) => {
+      if (!entryAt(event.target)) return;
+      onLeaveRef.current?.(event.relatedTarget);
+    };
+
+    container.addEventListener('focusin', onFocus);
+    container.addEventListener('focusout', onBlur);
+
+    return () => {
+      container.removeEventListener('focusin', onFocus);
+      container.removeEventListener('focusout', onBlur);
+    };
+  }, [map, mapRef, onEnterRef, onLeaveRef]);
 }
