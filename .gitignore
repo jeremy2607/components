@@ -1,0 +1,30 @@
+# Implémentation de référence, hors dépôt
+reference/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dépendances
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Tests
+coverage/
+
+# Outils
+.vite/
+.turbo/
+.eslintcache
+
+# OS et éditeurs
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
