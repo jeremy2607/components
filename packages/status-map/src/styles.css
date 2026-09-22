@@ -19,6 +19,7 @@
  *                            Il se pose sur les tuiles, pas sur l'interface :
  *                            à changer seulement pour un fond de carte sombre.
  *   --sm-focus               couleur de l'anneau de focus
+ *   --sm-selected-ring       anneau du marqueur sélectionné
  *   --sm-cluster-ink         compteur des regroupements
  *   --sm-cluster-ring        liseré des regroupements
  *   --sm-popup-bg            fond de la bulle
@@ -73,6 +74,17 @@
 .sm-marker__glyph {
   width: 60%;
   height: 60%;
+}
+
+.sm-marker--selected {
+  z-index: 1000 !important;
+}
+
+.sm-marker--selected .sm-marker__badge {
+  box-shadow:
+    0 0 0 2px var(--sm-marker-ring, #fff),
+    0 0 0 5px var(--sm-selected-ring, #172b4d),
+    0 2px 6px rgb(16 22 30 / 28%);
 }
 
 .sm-marker:focus {

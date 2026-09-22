@@ -10,6 +10,7 @@ export interface StatusIconOptions {
   symbolId: string | null;
   size: number;
   label: string;
+  selected: boolean;
 }
 
 /** La couleur finit dans un attribut de style : on la garde inoffensive. */
@@ -31,13 +32,16 @@ export function createStatusIcon({
   symbolId,
   size,
   label,
+  selected,
 }: StatusIconOptions): L.DivIcon {
   const glyph = symbolId
     ? `<svg class="sm-marker__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#${symbolId}"></use></svg>`
     : '';
 
+  const selection = selected ? ' sm-marker--selected' : '';
+
   return createLabelledDivIcon({
-    className: `sm-marker sm-marker--${sanitizeKey(statusKey)}`,
+    className: `sm-marker sm-marker--${sanitizeKey(statusKey)}${selection}`,
     html: `<span class="sm-marker__badge" style="--sm-marker-color:${cssValue(definition.color)}">${glyph}</span>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],

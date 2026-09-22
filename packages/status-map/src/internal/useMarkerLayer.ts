@@ -24,6 +24,8 @@ export interface UseMarkerLayerOptions<T extends AnyStatusItem> {
   symbolIds: Readonly<Record<T['status'], string>>;
   size: number;
   cluster: ClusterConfig | undefined;
+  /** Sélection pilotée de l'extérieur : met en valeur et ramène à l'écran. */
+  selectedId: string | null | undefined;
   /** Signatures de valeur, pour ne rebâtir qu'à un vrai changement. */
   statusSignature: string;
   clusterSignature: string;
@@ -46,7 +48,7 @@ function isClusterGroup(group: L.LayerGroup): group is L.MarkerClusterGroup {
  * clignoter le parc entier toutes les deux secondes.
  */
 export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerOptions<T>): void {
-  const { map, mapRef, items, size, statusSignature, clusterSignature } = options;
+  const { map, mapRef, items, size, statusSignature, clusterSignature, selectedId } = options;
 
   const groupRef = useRef<L.LayerGroup | null>(null);
   const markersRef = useRef(new Map<string, L.Marker>());
@@ -55,6 +57,7 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
   /** Dernier nom accessible posé, pour ne refabriquer l'icône qu'à un vrai changement. */
   const labelsRef = useRef(new Map<string, string>());
   const lastStatusSignature = useRef(statusSignature);
+  const lastSelectedId = useRef<string | null>(null);
 
   const statusesRef = useLatest(options.statuses);
   const symbolIdsRef = useLatest(options.symbolIds);
@@ -130,6 +133,7 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
       if (!definition) continue;
 
       const label = markerLabelRef.current(item, definition, item.status);
+      const selected = item.id === selectedId;
       const icon = () =>
         createStatusIcon({
           statusKey: item.status,
@@ -137,6 +141,7 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
           symbolId: definition.icon ? (symbols[item.status] ?? null) : null,
           size,
           label,
+          selected,
         });
 
       const position = L.latLng(item.lat, item.lng);
@@ -149,11 +154,15 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
 
         if (!existing.getLatLng().equals(position)) existing.setLatLng(position);
 
-        if (existing.options.status !== item.status || labels.get(item.id) !== label) {
+        const statusChanged = existing.options.status !== item.status;
+        const wasSelected = item.id === lastSelectedId.current;
+
+        if (statusChanged || labels.get(item.id) !== label || wasSelected !== selected) {
           existing.options.status = item.status;
           labels.set(item.id, label);
           existing.setIcon(icon());
-          restyled.push(existing);
+          // Seul un changement de statut peut changer la couleur d'un groupe.
+          if (statusChanged) restyled.push(existing);
         }
         continue;
       }
@@ -183,6 +192,8 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
       next.set(item.id, marker);
     }
 
+    lastSelectedId.current = selectedId ?? null;
+
     for (const [id, marker] of previous) {
       marker.off();
       group.removeLayer(marker);
@@ -210,6 +221,7 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
     map,
     items,
     size,
+    selectedId,
     statusSignature,
     statusesRef,
     symbolIdsRef,
@@ -219,4 +231,26 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
     onLeaveRef,
     onSelectRef,
   ]);
+
+  /*
+   * Une sélection venue du panneau doit être visible. Un marqueur pris dans un
+   * regroupement n'est pas dans le DOM : il faut déplier, pas seulement
+   * déplacer. Un marqueur déjà à l'écran n'est pas touché, sinon cliquer sur la
+   * carte ferait bouger la carte sous le doigt.
+   */
+  useEffect(() => {
+    const instance = mapRef.current;
+    const group = groupRef.current;
+    if (!instance || !group || !selectedId) return;
+
+    const marker = markersRef.current.get(selectedId);
+    if (!marker) return;
+
+    if (isClusterGroup(group) && !instance.hasLayer(marker)) {
+      group.zoomToShowLayer(marker);
+      return;
+    }
+
+    if (!instance.getBounds().contains(marker.getLatLng())) instance.panTo(marker.getLatLng());
+  }, [map, mapRef, selectedId]);
 }

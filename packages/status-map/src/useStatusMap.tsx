@@ -42,6 +42,11 @@ export interface UseStatusMapOptions<T extends AnyStatusItem = StatusItem> {
   renderPopup?: (item: T, context: PopupContext<T['status']>) => ReactNode;
   /** Clic sur un marqueur. Le composant ne navigue jamais de lui-même. */
   onSelect?: (item: T, event: L.LeafletMouseEvent) => void;
+  /**
+   * Sélection pilotée de l'extérieur. Le marqueur est mis en valeur, et ramené
+   * à l'écran s'il est hors cadre ou pris dans un regroupement.
+   */
+  selectedId?: string | null;
   /** Transmise à `renderPopup`, pour tout formatage sensible à la langue. */
   locale?: string;
   onDataQuality?: (report: DataQualityReport) => void;
@@ -94,6 +99,7 @@ export function useStatusMap<T extends AnyStatusItem = StatusItem>(
     popup,
     renderPopup,
     onSelect,
+    selectedId,
     locale,
     labels,
     onDataQuality,
@@ -194,6 +200,7 @@ export function useStatusMap<T extends AnyStatusItem = StatusItem>(
     symbolIds,
     size: markerSize,
     cluster,
+    selectedId,
     statusSignature,
     clusterSignature,
     markerLabel: labels?.marker ?? defaultMarkerLabel,
