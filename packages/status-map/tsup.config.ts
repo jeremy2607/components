@@ -8,7 +8,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'leaflet'],
+  external: ['react', 'react-dom', 'leaflet', 'leaflet.markercluster'],
   onSuccess: async () => {
     await copyFile('src/styles.css', 'dist/styles.css');
   },

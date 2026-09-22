@@ -1,6 +1,7 @@
 import * as L from 'leaflet';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LatLngTuple, TileConfig } from '../core/types';
+import { definedOnly } from './options';
 import { useLatest } from './useLatest';
 
 export interface UseLeafletMapOptions {
@@ -78,13 +79,16 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
     if (!instance) return;
 
     const tiles = tilesRef.current;
-    const layer = L.tileLayer(tiles.url, {
-      attribution: tiles.attribution,
-      subdomains: tiles.subdomains ?? 'abc',
-      maxZoom: tiles.maxZoom,
-      minZoom: tiles.minZoom,
-      className: tiles.className,
-    });
+    const layer = L.tileLayer(
+      tiles.url,
+      definedOnly<L.TileLayerOptions>({
+        attribution: tiles.attribution,
+        subdomains: tiles.subdomains ?? 'abc',
+        maxZoom: tiles.maxZoom,
+        minZoom: tiles.minZoom,
+        className: tiles.className,
+      }),
+    );
     layer.addTo(instance);
 
     return () => {

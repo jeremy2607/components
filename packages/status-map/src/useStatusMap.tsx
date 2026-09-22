@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, type ReactNode } from '
 import { analyzeDataQuality } from './core/dataQuality';
 import { computeView, DEFAULT_ZOOM } from './core/view';
 import type {
+  ClusterConfig,
   DataQualityReport,
   MarkerConfig,
   StatusDefinition,
@@ -26,6 +27,7 @@ export interface UseStatusMapOptions<K extends string = string, D = unknown> {
   view: ViewConfig;
   /** Cadre sur les éléments géolocalisés à la première mesure du conteneur. Défaut : true. */
   fitOnLoad?: boolean;
+  cluster?: ClusterConfig;
   marker?: MarkerConfig;
   labels?: StatusMapLabels<K, D>;
   onDataQuality?: (report: DataQualityReport) => void;
@@ -54,6 +56,14 @@ function defaultMarkerLabel<K extends string, D>(
   return `${item.id} - ${status.label ?? key}`;
 }
 
+function defaultClusterLabel<K extends string>(
+  count: number,
+  status: StatusDefinition,
+  key: K,
+): string {
+  return `${count} - ${status.label ?? key}`;
+}
+
 /**
  * Version sans rendu : pilote la carte et rend la main sur l'instance Leaflet.
  * `StatusMap` n'en est que l'emballage.
@@ -67,6 +77,7 @@ export function useStatusMap<K extends string = string, D = unknown>(
     tiles,
     view,
     fitOnLoad = true,
+    cluster,
     marker,
     labels,
     onDataQuality,
@@ -133,6 +144,18 @@ export function useStatusMap<K extends string = string, D = unknown>(
     statusKeys.map((key, index) => [key, `sm-${uid}-${index}`]),
   ) as Record<K, string>;
 
+  const clusterSignature = JSON.stringify([
+    cluster?.enabled,
+    cluster?.maxRadius,
+    cluster?.spiderfyOnMaxZoom,
+    cluster?.spiderfyDistanceMultiplier,
+    cluster?.showCoverageOnHover,
+    cluster?.removeOutsideVisibleBounds,
+    cluster?.zoomToBoundsOnClick,
+    cluster?.disableClusteringAtZoom,
+    cluster?.spiderLegPolylineOptions,
+  ]);
+
   useMarkerLayer({
     map,
     mapRef,
@@ -140,8 +163,11 @@ export function useStatusMap<K extends string = string, D = unknown>(
     statuses,
     symbolIds,
     size: marker?.size ?? DEFAULT_MARKER_SIZE,
+    cluster,
     statusSignature,
-    label: labels?.marker ?? defaultMarkerLabel,
+    clusterSignature,
+    markerLabel: labels?.marker ?? defaultMarkerLabel,
+    clusterLabel: labels?.cluster ?? defaultClusterLabel,
   });
 
   const sprite = <IconSprite statuses={statuses} symbolIds={symbolIds} />;

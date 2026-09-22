@@ -28,6 +28,9 @@ function item(id: string, status: string, lat?: number, lng?: number): StatusIte
   return { id, status, lat, lng };
 }
 
+/** Ces tests portent sur le marqueur seul : le regroupement a sa propre suite. */
+const withoutCluster = { enabled: false } as const;
+
 function renderMap(items: readonly StatusItem[], extra: { markerSize?: number } = {}) {
   let map: L.Map | undefined;
   const utils = render(
@@ -36,6 +39,7 @@ function renderMap(items: readonly StatusItem[], extra: { markerSize?: number } 
       statuses={statuses}
       tiles={tiles}
       view={view}
+      cluster={withoutCluster}
       marker={extra.markerSize ? { size: extra.markerSize } : undefined}
       onReady={(instance) => {
         map = instance;
@@ -134,8 +138,10 @@ describe('marqueurs', () => {
     const { container } = renderMap([item('a', 'warning', 43.7, 7.26)]);
     const [marker] = markerElements(container);
 
-    expect(marker).toHaveAttribute('role', 'img');
     expect(marker).toHaveAttribute('aria-label', 'a - en alerte');
+    // Rôle et tabindex viennent de Leaflet, qui rend le marqueur navigable.
+    expect(marker).toHaveAttribute('role', 'button');
+    expect(marker).toHaveAttribute('tabindex', '0');
   });
 
   it('remplace l icône sans recréer le marqueur quand le statut change', () => {
@@ -148,6 +154,7 @@ describe('marqueurs', () => {
         statuses={statuses}
         tiles={tiles}
         view={view}
+        cluster={withoutCluster}
       />,
     );
 
@@ -167,6 +174,7 @@ describe('marqueurs', () => {
         statuses={statuses}
         tiles={tiles}
         view={view}
+        cluster={withoutCluster}
       />,
     );
 
@@ -187,6 +195,7 @@ describe('marqueurs', () => {
         statuses={statuses}
         tiles={tiles}
         view={view}
+        cluster={withoutCluster}
       />,
     );
 

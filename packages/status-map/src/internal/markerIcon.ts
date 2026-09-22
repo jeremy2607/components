@@ -1,6 +1,7 @@
-import * as L from 'leaflet';
+import type * as L from 'leaflet';
 import type { StatusDefinition } from '../core/types';
 import { sanitizeKey } from './keys';
+import { createLabelledDivIcon } from './labelledIcon';
 
 export interface StatusIconOptions {
   statusKey: string;
@@ -8,10 +9,11 @@ export interface StatusIconOptions {
   /** Symbole du sprite à instancier, ou null si le statut n'a pas d'icône. */
   symbolId: string | null;
   size: number;
+  label: string;
 }
 
 /** La couleur finit dans un attribut de style : on la garde inoffensive. */
-function cssValue(value: string): string {
+export function cssValue(value: string): string {
   return value.replace(/["'<>;]/g, '');
 }
 
@@ -28,16 +30,18 @@ export function createStatusIcon({
   definition,
   symbolId,
   size,
+  label,
 }: StatusIconOptions): L.DivIcon {
   const glyph = symbolId
     ? `<svg class="sm-marker__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#${symbolId}"></use></svg>`
     : '';
 
-  return L.divIcon({
+  return createLabelledDivIcon({
     className: `sm-marker sm-marker--${sanitizeKey(statusKey)}`,
     html: `<span class="sm-marker__badge" style="--sm-marker-color:${cssValue(definition.color)}">${glyph}</span>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2)],
+    label,
   });
 }

@@ -1,9 +1,12 @@
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 import { useEffect, useRef } from 'react';
-import type { StatusDefinition, StatusItem, StatusRegistry } from '../core/types';
+import type { ClusterConfig, StatusDefinition, StatusItem, StatusRegistry } from '../core/types';
 import { isLocated } from '../core/view';
-import { useLatest } from './useLatest';
+import { createClusterIcon } from './clusterIcon';
 import { createStatusIcon } from './markerIcon';
+import { definedOnly } from './options';
+import { useLatest } from './useLatest';
 
 export interface UseMarkerLayerOptions<K extends string, D> {
   /** Instance vivante, pour ne jamais toucher une carte détruite. */
@@ -14,43 +17,73 @@ export interface UseMarkerLayerOptions<K extends string, D> {
   statuses: StatusRegistry<K>;
   symbolIds: Readonly<Record<K, string>>;
   size: number;
-  /** Signature de valeur du registre, pour ne redessiner qu'à un vrai changement. */
+  cluster: ClusterConfig | undefined;
+  /** Signatures de valeur, pour ne rebâtir qu'à un vrai changement. */
   statusSignature: string;
-  label: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
+  clusterSignature: string;
+  markerLabel: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
+  clusterLabel: (count: number, status: StatusDefinition, key: K) => string;
 }
 
-function applyLabel(marker: L.Marker, label: string): void {
-  const element = marker.getElement();
-  if (!element) return;
-
-  element.setAttribute('role', 'img');
-  element.setAttribute('aria-label', label);
+function isClusterGroup(group: L.LayerGroup): group is L.MarkerClusterGroup {
+  return 'refreshClusters' in group;
 }
 
 /**
- * Maintient un marqueur par élément géolocalisé.
+ * Maintient un marqueur par élément géolocalisé, regroupé ou non.
  *
  * Les marqueurs sont réconciliés, pas reconstruits : un changement de statut
  * remplace l'icône du marqueur existant. Sans cela, le mode temps réel ferait
  * clignoter le parc entier toutes les deux secondes.
  */
 export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptions<K, D>): void {
-  const { map, mapRef, items, statuses, symbolIds, size, statusSignature } = options;
+  const { map, mapRef, items, size, statusSignature, clusterSignature } = options;
 
   const groupRef = useRef<L.LayerGroup | null>(null);
   const markersRef = useRef(new Map<string, L.Marker>());
+  /** Dernier nom accessible posé, pour ne refabriquer l'icône qu'à un vrai changement. */
   const labelsRef = useRef(new Map<string, string>());
-  const labelRef = useLatest(options.label);
-  const statusesRef = useLatest(statuses);
-  const symbolIdsRef = useLatest(symbolIds);
+  const lastStatusSignature = useRef(statusSignature);
+
+  const statusesRef = useLatest(options.statuses);
+  const symbolIdsRef = useLatest(options.symbolIds);
+  const clusterRef = useLatest(options.cluster);
+  const markerLabelRef = useLatest(options.markerLabel);
+  const clusterLabelRef = useLatest(options.clusterLabel);
 
   useEffect(() => {
     const instance = mapRef.current;
     if (!instance) return;
 
-    const group = L.layerGroup().addTo(instance);
+    const config = clusterRef.current ?? {};
     const markers = markersRef.current;
     const labels = labelsRef.current;
+
+    const group =
+      config.enabled === false
+        ? L.layerGroup()
+        : L.markerClusterGroup(
+            definedOnly<L.MarkerClusterGroupOptions>({
+              animate: true,
+              maxClusterRadius: config.maxRadius ?? 80,
+              spiderfyOnMaxZoom: config.spiderfyOnMaxZoom ?? true,
+              spiderfyDistanceMultiplier: config.spiderfyDistanceMultiplier ?? 3,
+              showCoverageOnHover: config.showCoverageOnHover ?? false,
+              removeOutsideVisibleBounds: config.removeOutsideVisibleBounds ?? true,
+              zoomToBoundsOnClick: config.zoomToBoundsOnClick ?? true,
+              disableClusteringAtZoom: config.disableClusteringAtZoom,
+              spiderLegPolylineOptions: config.spiderLegPolylineOptions,
+              // Lit les refs : le registre peut changer sans rebâtir le groupe.
+              iconCreateFunction: (cluster) =>
+                createClusterIcon({
+                  cluster,
+                  statuses: statusesRef.current,
+                  label: clusterLabelRef.current,
+                }),
+            }),
+          );
+
+    group.addTo(instance);
     groupRef.current = group;
 
     return () => {
@@ -60,7 +93,7 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
       markers.clear();
       labels.clear();
     };
-  }, [map, mapRef]);
+  }, [map, mapRef, clusterSignature, clusterRef, statusesRef, clusterLabelRef]);
 
   useEffect(() => {
     const group = groupRef.current;
@@ -69,8 +102,9 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
     const registry = statusesRef.current;
     const symbols = symbolIdsRef.current;
     const previous = markersRef.current;
-    const next = new Map<string, L.Marker>();
     const labels = labelsRef.current;
+    const next = new Map<string, L.Marker>();
+    const restyled: L.Marker[] = [];
 
     for (const item of items) {
       if (!isLocated(item)) continue;
@@ -78,8 +112,15 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
       const definition = registry[item.status];
       if (!definition) continue;
 
-      const label = labelRef.current(item, definition, item.status);
-      labels.set(item.id, label);
+      const label = markerLabelRef.current(item, definition, item.status);
+      const icon = () =>
+        createStatusIcon({
+          statusKey: item.status,
+          definition,
+          symbolId: definition.icon ? symbols[item.status] : null,
+          size,
+          label,
+        });
 
       const position = L.latLng(item.lat, item.lng);
       const existing = previous.get(item.id);
@@ -90,42 +131,18 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
 
         if (!existing.getLatLng().equals(position)) existing.setLatLng(position);
 
-        if (existing.options.status !== item.status) {
+        if (existing.options.status !== item.status || labels.get(item.id) !== label) {
           existing.options.status = item.status;
-          existing.setIcon(
-            createStatusIcon({
-              statusKey: item.status,
-              definition,
-              symbolId: definition.icon ? symbols[item.status] : null,
-              size,
-            }),
-          );
+          labels.set(item.id, label);
+          existing.setIcon(icon());
+          restyled.push(existing);
         }
-
-        applyLabel(existing, label);
         continue;
       }
 
-      const marker = L.marker(position, {
-        icon: createStatusIcon({
-          statusKey: item.status,
-          definition,
-          symbolId: definition.icon ? symbols[item.status] : null,
-          size,
-        }),
-        status: item.status,
-        keyboard: true,
-      });
-
-      // Le regroupement retire puis rajoute les marqueurs : le nom accessible
-      // doit être reposé à chaque entrée dans le DOM.
-      marker.on('add', () => {
-        const current = labels.get(item.id);
-        if (current) applyLabel(marker, current);
-      });
-
+      const marker = L.marker(position, { icon: icon(), status: item.status, keyboard: true });
+      labels.set(item.id, label);
       group.addLayer(marker);
-      applyLabel(marker, label);
       next.set(item.id, marker);
     }
 
@@ -133,7 +150,31 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
       group.removeLayer(marker);
       labels.delete(id);
     }
-
     markersRef.current = next;
-  }, [map, items, size, statusSignature, statusesRef, symbolIdsRef, labelRef]);
+
+    /*
+     * Les icônes de regroupement ne se recalculent pas seules : changer
+     * l'icône d'un marqueur laisse son groupe à l'ancienne couleur. Un
+     * changement de registre touche tous les groupes, un changement de statut
+     * seulement ceux qui contiennent les marqueurs concernés.
+     */
+    if (!isClusterGroup(group)) return;
+
+    if (lastStatusSignature.current !== statusSignature) {
+      lastStatusSignature.current = statusSignature;
+      group.refreshClusters();
+      return;
+    }
+
+    if (restyled.length > 0) group.refreshClusters(restyled);
+  }, [
+    map,
+    items,
+    size,
+    statusSignature,
+    statusesRef,
+    symbolIdsRef,
+    markerLabelRef,
+    clusterSignature,
+  ]);
 }

@@ -1,3 +1,4 @@
+import type * as L from 'leaflet';
 import type { ReactNode } from 'react';
 
 declare module 'leaflet' {
@@ -60,6 +61,34 @@ export interface StatusDefinition {
 /** Registre ouvert : ajouter un statut, c'est ajouter une entrée. */
 export type StatusRegistry<K extends string = string> = Readonly<Record<K, StatusDefinition>>;
 
+/**
+ * Regroupement des éléments proches.
+ *
+ * Les noms d'options reprennent ceux du greffon `leaflet.markercluster`, qui
+ * ignore en silence toute option mal orthographiée : `zoomToBoundsOnClick` et
+ * `spiderLegPolylineOptions` prennent bien un « s ».
+ */
+export interface ClusterConfig {
+  /** Défaut : true. À false, chaque élément garde son marqueur. */
+  enabled?: boolean;
+  /** Rayon de regroupement en pixels. Défaut : 80. */
+  maxRadius?: number;
+  /** Défaut : true. */
+  spiderfyOnMaxZoom?: boolean;
+  /** Défaut : 3. Écarte les marqueurs déployés pour les rendre cliquables. */
+  spiderfyDistanceMultiplier?: number;
+  /** Défaut : false. */
+  showCoverageOnHover?: boolean;
+  /** Défaut : true. */
+  removeOutsideVisibleBounds?: boolean;
+  /** Défaut : true. */
+  zoomToBoundsOnClick?: boolean;
+  /** Au-delà de ce zoom, plus aucun regroupement. */
+  disableClusteringAtZoom?: number;
+  /** Trait des pattes de déploiement. */
+  spiderLegPolylineOptions?: L.PolylineOptions;
+}
+
 /** Géométrie des marqueurs. Les ancres en découlent. */
 export interface MarkerConfig {
   /** Côté de la pastille, en pixels. Défaut : 36. */
@@ -113,4 +142,9 @@ export interface StatusMapLabels<K extends string = string, D = unknown> {
    * du statut : une interpolation de vos données, aucune phrase du paquet.
    */
   marker?: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
+  /**
+   * Nom accessible d'un regroupement. Par défaut, le nombre d'éléments suivi
+   * du libellé du statut le plus grave.
+   */
+  cluster?: (count: number, status: StatusDefinition, key: K) => string;
 }

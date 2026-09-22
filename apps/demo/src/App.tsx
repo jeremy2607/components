@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { StatusMap, type DataQualityReport, type ViewConfig } from '@jeremyprat/status-map';
+import {
+  StatusMap,
+  type ClusterConfig,
+  type DataQualityReport,
+  type ViewConfig,
+} from '@jeremyprat/status-map';
 import { DataQualityNotice } from './components/DataQualityNotice';
 import { generateSites } from './data/generateSites';
 import { statuses } from './statuses';
@@ -7,6 +12,11 @@ import { tiles } from './tiles';
 import { useDismissible } from './useDismissible';
 
 const view: ViewConfig = { defaultCenter: [46.6, 2.4], defaultZoom: 6 };
+
+const cluster: ClusterConfig = {
+  maxRadius: 80,
+  spiderLegPolylineOptions: { weight: 2, color: '#5e6c84', opacity: 0.35 },
+};
 
 // Un seul parc par chargement de page, tiré à l'import : le rendu reste pur.
 const sites = generateSites();
@@ -35,10 +45,12 @@ export function App() {
           statuses={statuses}
           tiles={tiles}
           view={view}
+          cluster={cluster}
           onDataQuality={setReport}
           labels={{
             map: 'Carte du parc',
             marker: (item, status) => `${item.data?.name ?? item.id}, ${status.label ?? ''}`,
+            cluster: (count, status) => `${count} sites, dont au moins un ${status.label ?? ''}`,
           }}
         />
       </main>

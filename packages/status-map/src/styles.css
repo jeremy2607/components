@@ -19,6 +19,8 @@
  *                            Il se pose sur les tuiles, pas sur l'interface :
  *                            à changer seulement pour un fond de carte sombre.
  *   --sm-focus               couleur de l'anneau de focus
+ *   --sm-cluster-ink         compteur des regroupements
+ *   --sm-cluster-ring        liseré des regroupements
  */
 
 .sm-map {
@@ -77,6 +79,51 @@
   box-shadow:
     0 0 0 2px var(--sm-marker-ring, #fff),
     0 0 0 5px var(--sm-focus, #2563eb);
+}
+
+/*
+ * Les classes du greffon (marker-cluster-small et consorts) sont laissées
+ * intactes : la couleur vient de la sévérité, pas d'un palier de comptage.
+ */
+.sm-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sm-cluster__body {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sm-cluster-color, #7a8699) 32%, transparent);
+  color: var(--sm-cluster-ink, #10161f);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.sm-cluster__count {
+  display: flex;
+  width: 74%;
+  height: 74%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sm-cluster-color, #7a8699);
+  box-shadow: 0 0 0 1.5px var(--sm-cluster-ring, #fff);
+}
+
+.sm-cluster:focus {
+  outline: none;
+}
+
+.sm-cluster:focus-visible .sm-cluster__count {
+  box-shadow:
+    0 0 0 1.5px var(--sm-cluster-ring, #fff),
+    0 0 0 4.5px var(--sm-focus, #2563eb);
 }
 
 .sm-map .leaflet-control-attribution {
