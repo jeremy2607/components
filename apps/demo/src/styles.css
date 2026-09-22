@@ -13,6 +13,8 @@
   --sm-font: inherit;
   --sm-attribution-bg: rgb(255 255 255 / 85%);
   --sm-attribution-text: #5e6c84;
+  --sm-popup-bg: #ffffff;
+  --sm-popup-text: #172b4d;
 
   color-scheme: light dark;
 }
@@ -32,6 +34,8 @@
     --sm-map-bg: #1b2430;
     --sm-attribution-bg: rgb(16 22 30 / 85%);
     --sm-attribution-text: #9aa8bd;
+    --sm-popup-bg: #1d2733;
+    --sm-popup-text: #e6ebf3;
   }
 }
 
@@ -143,5 +147,116 @@ body {
 
 .notice__dismiss:focus-visible {
   outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.app__aside {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app__selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 4px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.app__selection-name {
+  font-weight: 600;
+}
+
+.app__selection button {
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.popup {
+  min-width: 196px;
+}
+
+.popup__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.popup__dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  margin-top: 5px;
+  border-radius: 50%;
+}
+
+.popup__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.popup__model {
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.popup__facts {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.popup__since {
+  color: var(--muted);
+}
+
+.popup__tags {
+  display: flex;
+  margin: 8px 0 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+}
+
+.popup__tags li {
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.popup__action {
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.popup__action:hover {
+  border-color: var(--text);
+}
+
+.popup__action:focus-visible {
+  outline: 2px solid var(--text);
   outline-offset: 1px;
 }

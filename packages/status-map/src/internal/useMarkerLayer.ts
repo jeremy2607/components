@@ -1,28 +1,37 @@
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { useEffect, useRef } from 'react';
-import type { ClusterConfig, StatusDefinition, StatusItem, StatusRegistry } from '../core/types';
+import type {
+  AnyStatusItem,
+  ClusterConfig,
+  StatusDefinition,
+  StatusLookup,
+  StatusRegistry,
+} from '../core/types';
 import { isLocated } from '../core/view';
 import { createClusterIcon } from './clusterIcon';
 import { createStatusIcon } from './markerIcon';
 import { definedOnly } from './options';
 import { useLatest } from './useLatest';
 
-export interface UseMarkerLayerOptions<K extends string, D> {
+export interface UseMarkerLayerOptions<T extends AnyStatusItem> {
   /** Instance vivante, pour ne jamais toucher une carte détruite. */
   mapRef: { readonly current: L.Map | null };
   /** Déclencheur de rendu : change quand la carte est recréée. */
   map: L.Map | null;
-  items: readonly StatusItem<K, D>[];
-  statuses: StatusRegistry<K>;
-  symbolIds: Readonly<Record<K, string>>;
+  items: readonly T[];
+  statuses: StatusRegistry<T['status']>;
+  symbolIds: Readonly<Record<T['status'], string>>;
   size: number;
   cluster: ClusterConfig | undefined;
   /** Signatures de valeur, pour ne rebâtir qu'à un vrai changement. */
   statusSignature: string;
   clusterSignature: string;
-  markerLabel: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
-  clusterLabel: (count: number, status: StatusDefinition, key: K) => string;
+  markerLabel: (item: T, status: StatusDefinition, key: T['status']) => string;
+  clusterLabel: (count: number, status: StatusDefinition, key: T['status']) => string;
+  onMarkerEnter?: (item: T, position: L.LatLng) => void;
+  onMarkerLeave?: (relatedTarget: EventTarget | null) => void;
+  onMarkerSelect?: (item: T, event: L.LeafletMouseEvent) => void;
 }
 
 function isClusterGroup(group: L.LayerGroup): group is L.MarkerClusterGroup {
@@ -36,11 +45,13 @@ function isClusterGroup(group: L.LayerGroup): group is L.MarkerClusterGroup {
  * remplace l'icône du marqueur existant. Sans cela, le mode temps réel ferait
  * clignoter le parc entier toutes les deux secondes.
  */
-export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptions<K, D>): void {
+export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerOptions<T>): void {
   const { map, mapRef, items, size, statusSignature, clusterSignature } = options;
 
   const groupRef = useRef<L.LayerGroup | null>(null);
   const markersRef = useRef(new Map<string, L.Marker>());
+  /** Dernier état connu de chaque élément : les gestionnaires posés une fois doivent le relire. */
+  const itemsRef = useRef(new Map<string, T>());
   /** Dernier nom accessible posé, pour ne refabriquer l'icône qu'à un vrai changement. */
   const labelsRef = useRef(new Map<string, string>());
   const lastStatusSignature = useRef(statusSignature);
@@ -50,6 +61,9 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
   const clusterRef = useLatest(options.cluster);
   const markerLabelRef = useLatest(options.markerLabel);
   const clusterLabelRef = useLatest(options.clusterLabel);
+  const onEnterRef = useLatest(options.onMarkerEnter);
+  const onLeaveRef = useLatest(options.onMarkerLeave);
+  const onSelectRef = useLatest(options.onMarkerSelect);
 
   useEffect(() => {
     const instance = mapRef.current;
@@ -58,6 +72,7 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
     const config = clusterRef.current ?? {};
     const markers = markersRef.current;
     const labels = labelsRef.current;
+    const knownItems = itemsRef.current;
 
     const group =
       config.enabled === false
@@ -92,6 +107,7 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
       groupRef.current = null;
       markers.clear();
       labels.clear();
+      knownItems.clear();
     };
   }, [map, mapRef, clusterSignature, clusterRef, statusesRef, clusterLabelRef]);
 
@@ -99,10 +115,11 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
     const group = groupRef.current;
     if (!group) return;
 
-    const registry = statusesRef.current;
-    const symbols = symbolIdsRef.current;
+    const registry: StatusLookup = statusesRef.current;
+    const symbols: Readonly<Record<string, string | undefined>> = symbolIdsRef.current;
     const previous = markersRef.current;
     const labels = labelsRef.current;
+    const knownItems = itemsRef.current;
     const next = new Map<string, L.Marker>();
     const restyled: L.Marker[] = [];
 
@@ -117,13 +134,14 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
         createStatusIcon({
           statusKey: item.status,
           definition,
-          symbolId: definition.icon ? symbols[item.status] : null,
+          symbolId: definition.icon ? (symbols[item.status] ?? null) : null,
           size,
           label,
         });
 
       const position = L.latLng(item.lat, item.lng);
       const existing = previous.get(item.id);
+      knownItems.set(item.id, item);
 
       if (existing) {
         previous.delete(item.id);
@@ -142,13 +160,34 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
 
       const marker = L.marker(position, { icon: icon(), status: item.status, keyboard: true });
       labels.set(item.id, label);
+
+      /*
+       * Gestionnaires posés une seule fois par marqueur, qui relisent l'élément
+       * courant : les remplacer à chaque rendu rebrancherait trois cents
+       * écouteurs pour rien.
+       */
+      const { id } = item;
+      marker.on('mouseover', () => {
+        const current = knownItems.get(id);
+        if (current) onEnterRef.current?.(current, marker.getLatLng());
+      });
+      marker.on('mouseout', (event: L.LeafletMouseEvent) => {
+        onLeaveRef.current?.(event.originalEvent.relatedTarget);
+      });
+      marker.on('click', (event: L.LeafletMouseEvent) => {
+        const current = knownItems.get(id);
+        if (current) onSelectRef.current?.(current, event);
+      });
+
       group.addLayer(marker);
       next.set(item.id, marker);
     }
 
     for (const [id, marker] of previous) {
+      marker.off();
       group.removeLayer(marker);
       labels.delete(id);
+      knownItems.delete(id);
     }
     markersRef.current = next;
 
@@ -176,5 +215,8 @@ export function useMarkerLayer<K extends string, D>(options: UseMarkerLayerOptio
     symbolIdsRef,
     markerLabelRef,
     clusterSignature,
+    onEnterRef,
+    onLeaveRef,
+    onSelectRef,
   ]);
 }

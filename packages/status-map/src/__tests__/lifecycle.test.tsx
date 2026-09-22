@@ -2,7 +2,7 @@ import type * as L from 'leaflet';
 import { StrictMode } from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { StatusMap } from '../StatusMap';
+import { StatusMap, type StatusMapProps } from '../StatusMap';
 import type { StatusItem, StatusRegistry, TileConfig, ViewConfig } from '../core/types';
 import { ResizeObserverMock } from './helpers/resizeObserver';
 
@@ -24,7 +24,7 @@ const items: StatusItem[] = [
   { id: 'b', lat: 48.85, lng: 2.35, status: 'ok' },
 ];
 
-function renderMap(props: Partial<React.ComponentProps<typeof StatusMap>> = {}) {
+function renderMap(props: Partial<StatusMapProps> = {}) {
   let map: L.Map | undefined;
   const utils = render(
     <StatusMap

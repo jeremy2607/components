@@ -6,7 +6,9 @@ import {
   type ViewConfig,
 } from '@jeremyprat/status-map';
 import { DataQualityNotice } from './components/DataQualityNotice';
+import { SitePopup } from './components/SitePopup';
 import { generateSites } from './data/generateSites';
+import type { Site } from './data/types';
 import { statuses } from './statuses';
 import { tiles } from './tiles';
 import { useDismissible } from './useDismissible';
@@ -21,8 +23,11 @@ const cluster: ClusterConfig = {
 // Un seul parc par chargement de page, tiré à l'import : le rendu reste pur.
 const sites = generateSites();
 
+const LOCALE = 'fr-FR';
+
 export function App() {
   const [report, setReport] = useState<DataQualityReport | null>(null);
+  const [selected, setSelected] = useState<Site | null>(null);
   const { dismissed, dismiss } = useDismissible('data-quality');
 
   return (
@@ -34,7 +39,17 @@ export function App() {
             Carte de supervision d'un parc de sites, clustering coloré par sévérité.
           </p>
         </div>
-        <p className="app__count">{sites.length} sites</p>
+        <div className="app__aside">
+          {selected && (
+            <p className="app__selection">
+              <span className="app__selection-name">{selected.data.name}</span>
+              <button type="button" onClick={() => setSelected(null)}>
+                Désélectionner
+              </button>
+            </p>
+          )}
+          <p className="app__count">{sites.length} sites</p>
+        </div>
       </header>
 
       {report && !dismissed && <DataQualityNotice report={report} onDismiss={dismiss} />}
@@ -46,6 +61,11 @@ export function App() {
           tiles={tiles}
           view={view}
           cluster={cluster}
+          locale={LOCALE}
+          onSelect={setSelected}
+          renderPopup={(site, context) => (
+            <SitePopup site={site} context={context} onOpenDetails={setSelected} />
+          )}
           onDataQuality={setReport}
           labels={{
             map: 'Carte du parc',

@@ -3,9 +3,12 @@ import { useCallback, useEffect, useId, useMemo, useRef, type ReactNode } from '
 import { analyzeDataQuality } from './core/dataQuality';
 import { computeView, DEFAULT_ZOOM } from './core/view';
 import type {
+  AnyStatusItem,
   ClusterConfig,
   DataQualityReport,
   MarkerConfig,
+  PopupConfig,
+  PopupContext,
   StatusDefinition,
   StatusItem,
   StatusMapLabels,
@@ -17,19 +20,30 @@ import { IconSprite } from './internal/IconSprite';
 import { useLatest } from './internal/useLatest';
 import { useLeafletMap } from './internal/useLeafletMap';
 import { useMarkerLayer } from './internal/useMarkerLayer';
+import { usePopup } from './internal/usePopup';
 
 const DEFAULT_MARKER_SIZE = 36;
 
-export interface UseStatusMapOptions<K extends string = string, D = unknown> {
-  items: readonly StatusItem<K, D>[];
-  statuses: StatusRegistry<K>;
+export interface UseStatusMapOptions<T extends AnyStatusItem = StatusItem> {
+  items: readonly T[];
+  statuses: StatusRegistry<T['status']>;
   tiles: TileConfig;
   view: ViewConfig;
   /** Cadre sur les éléments géolocalisés à la première mesure du conteneur. Défaut : true. */
   fitOnLoad?: boolean;
   cluster?: ClusterConfig;
   marker?: MarkerConfig;
-  labels?: StatusMapLabels<K, D>;
+  popup?: PopupConfig;
+  labels?: StatusMapLabels<T>;
+  /**
+   * Contenu de la bulle. Sans cette prop, aucune bulle n'est montée.
+   * Le rendu est monté par portail : JSX, gestionnaires et contexte React y vivent.
+   */
+  renderPopup?: (item: T, context: PopupContext<T['status']>) => ReactNode;
+  /** Clic sur un marqueur. Le composant ne navigue jamais de lui-même. */
+  onSelect?: (item: T, event: L.LeafletMouseEvent) => void;
+  /** Transmise à `renderPopup`, pour tout formatage sensible à la langue. */
+  locale?: string;
   onDataQuality?: (report: DataQualityReport) => void;
   /** Échappatoire : options Leaflet brutes, lues à la création. */
   mapOptions?: L.MapOptions;
@@ -41,6 +55,8 @@ export interface UseStatusMapResult {
   map: L.Map | null;
   /** Sprite des icônes, à rendre une fois à côté du conteneur. */
   sprite: ReactNode;
+  /** Portail de la bulle, à rendre une fois à côté du conteneur. */
+  popup: ReactNode;
   dataQuality: DataQualityReport;
   /** Recadre depuis les éléments courants. */
   fit: () => void;
@@ -48,19 +64,15 @@ export interface UseStatusMapResult {
 }
 
 /** Aucune prose : une interpolation des données du consommateur. */
-function defaultMarkerLabel<K extends string, D>(
-  item: StatusItem<K, D>,
+function defaultMarkerLabel<T extends AnyStatusItem>(
+  item: T,
   status: StatusDefinition,
-  key: K,
+  key: T['status'],
 ): string {
   return `${item.id} - ${status.label ?? key}`;
 }
 
-function defaultClusterLabel<K extends string>(
-  count: number,
-  status: StatusDefinition,
-  key: K,
-): string {
+function defaultClusterLabel(count: number, status: StatusDefinition, key: string): string {
   return `${count} - ${status.label ?? key}`;
 }
 
@@ -68,8 +80,8 @@ function defaultClusterLabel<K extends string>(
  * Version sans rendu : pilote la carte et rend la main sur l'instance Leaflet.
  * `StatusMap` n'en est que l'emballage.
  */
-export function useStatusMap<K extends string = string, D = unknown>(
-  options: UseStatusMapOptions<K, D>,
+export function useStatusMap<T extends AnyStatusItem = StatusItem>(
+  options: UseStatusMapOptions<T>,
 ): UseStatusMapResult {
   const {
     items,
@@ -79,6 +91,10 @@ export function useStatusMap<K extends string = string, D = unknown>(
     fitOnLoad = true,
     cluster,
     marker,
+    popup,
+    renderPopup,
+    onSelect,
+    locale,
     labels,
     onDataQuality,
     mapOptions,
@@ -131,7 +147,7 @@ export function useStatusMap<K extends string = string, D = unknown>(
   // Identifiants de symboles propres à cette carte : plusieurs cartes sur une
   // même page ne doivent pas se voler leurs icônes.
   const uid = useId().replace(/:/g, '');
-  const statusKeys = Object.keys(statuses) as K[];
+  const statusKeys = Object.keys(statuses) as T['status'][];
   const statusSignature = JSON.stringify(
     statusKeys.map((key) => [
       key,
@@ -142,7 +158,7 @@ export function useStatusMap<K extends string = string, D = unknown>(
   );
   const symbolIds = Object.fromEntries(
     statusKeys.map((key, index) => [key, `sm-${uid}-${index}`]),
-  ) as Record<K, string>;
+  ) as Record<T['status'], string>;
 
   const clusterSignature = JSON.stringify([
     cluster?.enabled,
@@ -156,18 +172,35 @@ export function useStatusMap<K extends string = string, D = unknown>(
     cluster?.spiderLegPolylineOptions,
   ]);
 
+  const markerSize = marker?.size ?? DEFAULT_MARKER_SIZE;
+
+  const bubble = usePopup<T>({
+    map,
+    mapRef,
+    statuses,
+    render: renderPopup,
+    config: popup,
+    markerSize,
+    locale,
+  });
+
+  const onSelectRef = useLatest(onSelect);
+
   useMarkerLayer({
     map,
     mapRef,
     items,
     statuses,
     symbolIds,
-    size: marker?.size ?? DEFAULT_MARKER_SIZE,
+    size: markerSize,
     cluster,
     statusSignature,
     clusterSignature,
     markerLabel: labels?.marker ?? defaultMarkerLabel,
     clusterLabel: labels?.cluster ?? defaultClusterLabel,
+    onMarkerEnter: renderPopup ? bubble.open : undefined,
+    onMarkerLeave: renderPopup ? bubble.scheduleClose : undefined,
+    onMarkerSelect: (item, event) => onSelectRef.current?.(item, event),
   });
 
   const sprite = <IconSprite statuses={statuses} symbolIds={symbolIds} />;
@@ -188,5 +221,5 @@ export function useStatusMap<K extends string = string, D = unknown>(
     onDataQualityRef.current?.(dataQualityRef.current);
   }, [qualitySignature, onDataQualityRef, dataQualityRef]);
 
-  return { containerRef, map, sprite, dataQuality, fit, invalidateSize };
+  return { containerRef, map, sprite, popup: bubble.node, dataQuality, fit, invalidateSize };
 }

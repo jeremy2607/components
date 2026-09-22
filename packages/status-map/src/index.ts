@@ -6,6 +6,7 @@ export { resolveWorstStatus } from './core/severity';
 export { computeView, isLocated, type ViewResolution } from './core/view';
 
 export type {
+  AnyStatusItem,
   ClusterConfig,
   DataQualityReport,
   LatLngTuple,
@@ -13,6 +14,8 @@ export type {
   LocatedItem,
   MarkerConfig,
   PointTuple,
+  PopupConfig,
+  PopupContext,
   StatusDefinition,
   StatusItem,
   StatusMapLabels,

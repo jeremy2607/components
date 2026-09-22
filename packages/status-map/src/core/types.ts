@@ -37,6 +37,9 @@ export interface StatusItem<K extends string = string, D = unknown> {
 /** Ajoute des coordonnées exploitables à un élément, en préservant son type. */
 export type Located<T> = T & { lat: number; lng: number };
 
+/** Borne minimale d'un élément de carte. Sert de contrainte aux génériques. */
+export type AnyStatusItem = StatusItem<string, unknown>;
+
 /** Élément dont les coordonnées sont exploitables. Voir `isLocated`. */
 export type LocatedItem<K extends string = string, D = unknown> = Located<StatusItem<K, D>>;
 
@@ -60,6 +63,14 @@ export interface StatusDefinition {
 
 /** Registre ouvert : ajouter un statut, c'est ajouter une entrée. */
 export type StatusRegistry<K extends string = string> = Readonly<Record<K, StatusDefinition>>;
+
+/**
+ * Vue élargie du registre, pour les recherches à l'exécution.
+ *
+ * Un statut lu sur un marqueur est une chaîne quelconque, et rien ne garantit
+ * que le registre la décrive : le type le dit plutôt que de le supposer.
+ */
+export type StatusLookup = Readonly<Record<string, StatusDefinition | undefined>>;
 
 /**
  * Regroupement des éléments proches.
@@ -87,6 +98,31 @@ export interface ClusterConfig {
   disableClusteringAtZoom?: number;
   /** Trait des pattes de déploiement. */
   spiderLegPolylineOptions?: L.PolylineOptions;
+}
+
+/** Bulle d'information au survol. */
+export interface PopupConfig {
+  /**
+   * Délai avant fermeture, en millisecondes. Défaut : 200.
+   *
+   * Il existe un vide entre le marqueur et la bulle : sans ce délai, le
+   * curseur ne peut pas le traverser sans la faire disparaître.
+   */
+  closeDelay?: number;
+  /** Décalage de la bulle. Par défaut, calculé depuis la taille du marqueur. */
+  offset?: PointTuple;
+  /** Défaut : 320. */
+  maxWidth?: number;
+  className?: string;
+}
+
+/** Contexte remis à `renderPopup`. */
+export interface PopupContext<K extends string = string> {
+  status: StatusDefinition;
+  statusKey: K;
+  /** Ferme la bulle sans attendre la sortie du curseur. */
+  close: () => void;
+  locale: string | undefined;
 }
 
 /** Géométrie des marqueurs. Les ancres en découlent. */
@@ -134,17 +170,17 @@ export interface DataQualityReport {
 }
 
 /** Libellés visibles. Le paquet n'embarque aucune prose. */
-export interface StatusMapLabels<K extends string = string, D = unknown> {
+export interface StatusMapLabels<T extends AnyStatusItem = StatusItem> {
   /** Nom accessible du conteneur de carte. */
   map?: string;
   /**
    * Nom accessible d'un marqueur. Par défaut, l'identifiant suivi du libellé
    * du statut : une interpolation de vos données, aucune phrase du paquet.
    */
-  marker?: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
+  marker?: (item: T, status: StatusDefinition, key: T['status']) => string;
   /**
    * Nom accessible d'un regroupement. Par défaut, le nombre d'éléments suivi
    * du libellé du statut le plus grave.
    */
-  cluster?: (count: number, status: StatusDefinition, key: K) => string;
+  cluster?: (count: number, status: StatusDefinition, key: T['status']) => string;
 }

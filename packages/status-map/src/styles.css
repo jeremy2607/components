@@ -21,6 +21,10 @@
  *   --sm-focus               couleur de l'anneau de focus
  *   --sm-cluster-ink         compteur des regroupements
  *   --sm-cluster-ring        liseré des regroupements
+ *   --sm-popup-bg            fond de la bulle
+ *   --sm-popup-text          texte de la bulle
+ *   --sm-popup-radius        rayon des coins de la bulle
+ *   --sm-popup-shadow        ombre de la bulle
  */
 
 .sm-map {
@@ -138,6 +142,68 @@
   text-decoration: underline;
 }
 
+/*
+ * La bulle s'ouvre au survol : elle ne doit ni déplacer la carte sous le
+ * curseur, ni offrir une croix de fermeture qu'on ne peut pas atteindre.
+ */
+.sm-popup .leaflet-popup-close-button {
+  display: none;
+}
+
+.sm-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: var(--sm-popup-radius, 10px);
+  background: var(--sm-popup-bg, #fff);
+  color: var(--sm-popup-text, #172b4d);
+  box-shadow: var(--sm-popup-shadow, 0 6px 28px rgb(16 22 30 / 18%));
+  text-align: left;
+}
+
+.sm-popup .leaflet-popup-content {
+  width: auto !important;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sm-popup .leaflet-popup-tip {
+  background: var(--sm-popup-bg, #fff);
+  box-shadow: var(--sm-popup-shadow, 0 6px 28px rgb(16 22 30 / 18%));
+}
+
+.sm-popup__content {
+  padding: 12px 14px;
+}
+
+/*
+ * Entrée et sortie courtes. Leaflet pose l'opacité en style en ligne et garde
+ * l'élément en vie le temps de son fondu : on ne lui dispute que la durée, et
+ * l'échelle passe par une classe que nous posons.
+ */
+.sm-popup .leaflet-popup-content-wrapper,
+.sm-popup .leaflet-popup-tip-container {
+  transform: translateY(4px) scale(0.97);
+  transition: transform 75ms ease-out;
+}
+
+.sm-popup--open .leaflet-popup-content-wrapper,
+.sm-popup--open .leaflet-popup-tip-container {
+  transform: none;
+}
+
+.leaflet-fade-anim .sm-popup {
+  transition: opacity 75ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-popup .leaflet-popup-content-wrapper,
+  .sm-popup .leaflet-popup-tip-container,
+  .leaflet-fade-anim .sm-popup {
+    transform: none;
+    transition: none;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .sm-map__canvas {
     background: var(--sm-map-bg, #1b2430);
@@ -146,5 +212,12 @@
   .sm-map .leaflet-control-attribution {
     background: var(--sm-attribution-bg, rgb(16 22 30 / 80%));
     color: var(--sm-attribution-text, #aab6c8);
+  }
+
+  .sm-popup .leaflet-popup-content-wrapper,
+  .sm-popup .leaflet-popup-tip {
+    background: var(--sm-popup-bg, #1d2733);
+    color: var(--sm-popup-text, #e6ebf3);
+    box-shadow: var(--sm-popup-shadow, 0 6px 28px rgb(0 0 0 / 45%));
   }
 }

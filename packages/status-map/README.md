@@ -3,7 +3,7 @@
 Carte Leaflet d'un parc de sites géolocalisés, dont le regroupement prend la couleur du
 pire statut du groupe.
 
-> En construction. Carte, cadrage, marqueurs et regroupement sont en place ; le popup arrive.
+> En construction. Carte, cadrage, marqueurs, regroupement et bulle sont en place.
 > La documentation complète de l'API sera écrite une fois la surface publique figée.
 
 ## Installation
@@ -53,6 +53,23 @@ restent intacts.
 
 Quand un statut change, `status-map` appelle `refreshClusters()` sur les seuls groupes
 touchés : les icônes de regroupement ne se recalculent pas d'elles-mêmes.
+
+## La bulle au survol
+
+`renderPopup` reçoit l'élément et rend du JSX. Le contenu est monté par `createPortal` dans
+un conteneur que le paquet possède, jamais posé en `innerHTML` : les gestionnaires
+d'événements, les liens de routeur et le contexte React y vivent normalement.
+
+Une seule instance de bulle sert toute la carte. Trois cents marqueurs ne justifient pas
+trois cents `bindPopup`, et le décalage vertical se calcule depuis la taille du marqueur.
+
+Le curseur doit pouvoir traverser le vide entre le marqueur et la bulle. À la sortie du
+marqueur, la fermeture est programmée à 200 ms, sauf si le curseur est déjà entré dans la
+bulle ; la bulle écoute de son côté et annule la fermeture si le curseur l'atteint à temps.
+`autoPan` est à `false` : une bulle qui déplace la carte sous un curseur en survol la fait
+fuir. En contrepartie, une bulle ouverte près d'un bord est découpée par le conteneur.
+
+Un clic sur un marqueur appelle `onSelect(item)`. Le composant ne navigue jamais lui-même.
 
 ## Licence
 
