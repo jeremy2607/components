@@ -1,4 +1,5 @@
 import type * as L from 'leaflet';
+import { StrictMode } from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StatusMap } from '../StatusMap';
@@ -97,6 +98,12 @@ describe('StatusMap', () => {
     expect(onDataQuality).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'warning', missing: 1, missingIds: ['c'] }),
     );
+  });
+
+  it('survit au double montage de StrictMode', () => {
+    expect(() =>
+      render(<StatusMap items={items} tiles={tiles} view={view} />, { wrapper: StrictMode }),
+    ).not.toThrow();
   });
 
   it('ne laisse aucun élément orphelin apres 50 montages et démontages', () => {

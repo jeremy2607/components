@@ -15,7 +15,10 @@ export interface UseLeafletMapOptions {
 
 export interface UseLeafletMapResult {
   containerRef: (node: HTMLDivElement | null) => void;
+  /** Instance courante, pour les effets et le rendu. */
   map: L.Map | null;
+  /** Instance vivante, pour les appels impératifs. Jamais une carte détruite. */
+  mapRef: { readonly current: L.Map | null };
 }
 
 /**
@@ -27,6 +30,15 @@ export interface UseLeafletMapResult {
 export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResult {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [map, setMap] = useState<L.Map | null>(null);
+
+  /*
+   * Les effets dépendants lisent l'instance ici, jamais dans la fermeture de
+   * leur rendu, et se calent sur `container` comme l'effet de création. Un
+   * rejeu d'effets (StrictMode, rechargement à chaud) relancerait sinon un
+   * effet dont la carte capturée vient d'être détruite, et Leaflet échoue
+   * alors dans getPane().
+   */
+  const mapRef = useRef<L.Map | null>(null);
 
   // Lues une seule fois : changer ces valeurs ne recréé pas la carte.
   const creationRef = useRef({
@@ -46,9 +58,11 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
 
     const { center, zoom, mapOptions } = creationRef.current;
     const instance = L.map(container, { ...mapOptions, center: [center[0], center[1]], zoom });
+    mapRef.current = instance;
     setMap(instance);
 
     return () => {
+      mapRef.current = null;
       instance.remove();
       setMap(null);
     };
@@ -60,7 +74,8 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
   const tilesKey = JSON.stringify([url, attribution, subdomains, maxZoom, minZoom, className]);
 
   useEffect(() => {
-    if (!map) return;
+    const instance = mapRef.current;
+    if (!instance) return;
 
     const tiles = tilesRef.current;
     const layer = L.tileLayer(tiles.url, {
@@ -70,15 +85,16 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
       minZoom: tiles.minZoom,
       className: tiles.className,
     });
-    layer.addTo(map);
+    layer.addTo(instance);
 
     return () => {
       layer.remove();
     };
-  }, [map, tilesKey, tilesRef]);
+  }, [container, tilesKey, tilesRef]);
 
   useEffect(() => {
-    if (!map || !container) return;
+    const instance = mapRef.current;
+    if (!instance || !container) return;
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -87,7 +103,7 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
       const { width, height } = entry.contentRect;
       if (width === 0 || height === 0) return;
 
-      map.invalidateSize();
+      instance.invalidateSize();
       onMeasureRef.current?.();
     });
     observer.observe(container);
@@ -95,7 +111,7 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
     return () => {
       observer.disconnect();
     };
-  }, [map, container, onMeasureRef]);
+  }, [container, onMeasureRef]);
 
-  return { containerRef, map };
+  return { containerRef, map, mapRef };
 }

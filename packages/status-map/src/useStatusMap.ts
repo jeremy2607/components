@@ -40,7 +40,7 @@ export function useStatusMap<K extends string = string, D = unknown>(
   const viewRef = useLatest(view);
   const hasFitted = useRef(false);
 
-  const { containerRef, map } = useLeafletMap({
+  const { containerRef, map, mapRef } = useLeafletMap({
     tiles,
     initialCenter: view.defaultCenter,
     initialZoom: view.defaultZoom ?? DEFAULT_ZOOM,
@@ -56,8 +56,6 @@ export function useStatusMap<K extends string = string, D = unknown>(
       fit();
     },
   });
-
-  const mapRef = useLatest(map);
 
   const fit = useCallback(() => {
     const instance = mapRef.current;

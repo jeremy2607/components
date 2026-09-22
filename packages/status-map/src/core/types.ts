@@ -19,13 +19,13 @@ export interface StatusItem<K extends string = string, D = unknown> {
   data?: D;
 }
 
-/** Élément dont les coordonnées sont exploitables. Voir `isLocated`. */
-export type LocatedItem<K extends string = string, D = unknown> = StatusItem<K, D> & {
-  lat: number;
-  lng: number;
-};
+/** Ajoute des coordonnées exploitables à un élément, en préservant son type. */
+export type Located<T> = T & { lat: number; lng: number };
 
-/** Fond de carte. Injecte par le consommateur, jamais code en dur. */
+/** Élément dont les coordonnées sont exploitables. Voir `isLocated`. */
+export type LocatedItem<K extends string = string, D = unknown> = Located<StatusItem<K, D>>;
+
+/** Fond de carte. Injecté par le consommateur, jamais codé en dur. */
 export interface TileConfig {
   url: string;
   attribution: string;

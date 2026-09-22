@@ -1,4 +1,4 @@
-import type { LatLngTuple, LocatedItem, PointTuple, StatusItem, ViewConfig } from './types';
+import type { LatLngTuple, Located, PointTuple, StatusItem, ViewConfig } from './types';
 
 export const DEFAULT_ZOOM = 5;
 const DEFAULT_SINGLE_ITEM_ZOOM = 12;
@@ -6,7 +6,7 @@ const DEFAULT_PADDING: PointTuple = [48, 48];
 const DEFAULT_FIT_MAX_ZOOM = 13;
 
 /** Vrai si les coordonnées sont finies et dans les bornes géographiques. */
-export function isLocated<K extends string, D>(item: StatusItem<K, D>): item is LocatedItem<K, D> {
+export function isLocated<T extends StatusItem<string, unknown>>(item: T): item is Located<T> {
   const { lat, lng } = item;
   return (
     typeof lat === 'number' &&

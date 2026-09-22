@@ -7,6 +7,7 @@ export { computeView, isLocated, type ViewResolution } from './core/view';
 export type {
   DataQualityReport,
   LatLngTuple,
+  Located,
   LocatedItem,
   PointTuple,
   StatusItem,
