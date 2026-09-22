@@ -1,0 +1,49 @@
+/*
+ * @jeremyprat/status-map
+ *
+ * À importer séparément : import '@jeremyprat/status-map/styles.css'
+ * La feuille de Leaflet reste à la charge de l'application :
+ *   import 'leaflet/dist/leaflet.css'
+ *
+ * Variables reconnues, toutes facultatives. Définies sur un ancetre (:root,
+ * un conteneur de thème), elles l'emportent sur les valeurs par défaut, qui
+ * suivent sinon le schéma clair / sombre du système.
+ *
+ *   --sm-map-bg              fond du conteneur, visible pendant le chargement des tuiles
+ *   --sm-font                famille typographique des contrôles
+ *   --sm-radius              rayon des coins du conteneur
+ *   --sm-attribution-bg      fond du bloc d'attribution
+ *   --sm-attribution-text    texte du bloc d'attribution
+ */
+
+.sm-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--sm-map-bg, #e9edf2);
+  border-radius: var(--sm-radius, 0);
+  font-family: var(--sm-font, inherit);
+}
+
+.sm-map .leaflet-control-attribution {
+  background: var(--sm-attribution-bg, rgb(255 255 255 / 80%));
+  color: var(--sm-attribution-text, #46536b);
+  font-family: var(--sm-font, inherit);
+  font-size: 11px;
+}
+
+.sm-map .leaflet-control-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sm-map {
+    background: var(--sm-map-bg, #1b2430);
+  }
+
+  .sm-map .leaflet-control-attribution {
+    background: var(--sm-attribution-bg, rgb(16 22 30 / 80%));
+    color: var(--sm-attribution-text, #aab6c8);
+  }
+}
