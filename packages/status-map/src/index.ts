@@ -9,9 +9,12 @@ export type {
   LatLngTuple,
   Located,
   LocatedItem,
+  MarkerConfig,
   PointTuple,
+  StatusDefinition,
   StatusItem,
   StatusMapLabels,
+  StatusRegistry,
   TileConfig,
   ViewConfig,
 } from './core/types';

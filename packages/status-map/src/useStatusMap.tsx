@@ -1,17 +1,33 @@
 import * as L from 'leaflet';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { analyzeDataQuality } from './core/dataQuality';
 import { computeView, DEFAULT_ZOOM } from './core/view';
-import type { DataQualityReport, StatusItem, TileConfig, ViewConfig } from './core/types';
+import type {
+  DataQualityReport,
+  MarkerConfig,
+  StatusDefinition,
+  StatusItem,
+  StatusMapLabels,
+  StatusRegistry,
+  TileConfig,
+  ViewConfig,
+} from './core/types';
+import { IconSprite } from './internal/IconSprite';
 import { useLatest } from './internal/useLatest';
 import { useLeafletMap } from './internal/useLeafletMap';
+import { useMarkerLayer } from './internal/useMarkerLayer';
+
+const DEFAULT_MARKER_SIZE = 36;
 
 export interface UseStatusMapOptions<K extends string = string, D = unknown> {
   items: readonly StatusItem<K, D>[];
+  statuses: StatusRegistry<K>;
   tiles: TileConfig;
   view: ViewConfig;
   /** Cadre sur les éléments géolocalisés à la première mesure du conteneur. Défaut : true. */
   fitOnLoad?: boolean;
+  marker?: MarkerConfig;
+  labels?: StatusMapLabels<K, D>;
   onDataQuality?: (report: DataQualityReport) => void;
   /** Échappatoire : options Leaflet brutes, lues à la création. */
   mapOptions?: L.MapOptions;
@@ -21,10 +37,21 @@ export interface UseStatusMapOptions<K extends string = string, D = unknown> {
 export interface UseStatusMapResult {
   containerRef: (node: HTMLDivElement | null) => void;
   map: L.Map | null;
+  /** Sprite des icônes, à rendre une fois à côté du conteneur. */
+  sprite: ReactNode;
   dataQuality: DataQualityReport;
   /** Recadre depuis les éléments courants. */
   fit: () => void;
   invalidateSize: () => void;
+}
+
+/** Aucune prose : une interpolation des données du consommateur. */
+function defaultMarkerLabel<K extends string, D>(
+  item: StatusItem<K, D>,
+  status: StatusDefinition,
+  key: K,
+): string {
+  return `${item.id} - ${status.label ?? key}`;
 }
 
 /**
@@ -34,7 +61,18 @@ export interface UseStatusMapResult {
 export function useStatusMap<K extends string = string, D = unknown>(
   options: UseStatusMapOptions<K, D>,
 ): UseStatusMapResult {
-  const { items, tiles, view, fitOnLoad = true, onDataQuality, mapOptions, onReady } = options;
+  const {
+    items,
+    statuses,
+    tiles,
+    view,
+    fitOnLoad = true,
+    marker,
+    labels,
+    onDataQuality,
+    mapOptions,
+    onReady,
+  } = options;
 
   const itemsRef = useLatest(items);
   const viewRef = useLatest(view);
@@ -79,6 +117,35 @@ export function useStatusMap<K extends string = string, D = unknown>(
     mapRef.current?.invalidateSize();
   }, [mapRef]);
 
+  // Identifiants de symboles propres à cette carte : plusieurs cartes sur une
+  // même page ne doivent pas se voler leurs icônes.
+  const uid = useId().replace(/:/g, '');
+  const statusKeys = Object.keys(statuses) as K[];
+  const statusSignature = JSON.stringify(
+    statusKeys.map((key) => [
+      key,
+      statuses[key].color,
+      statuses[key].severity,
+      statuses[key].label,
+    ]),
+  );
+  const symbolIds = Object.fromEntries(
+    statusKeys.map((key, index) => [key, `sm-${uid}-${index}`]),
+  ) as Record<K, string>;
+
+  useMarkerLayer({
+    map,
+    mapRef,
+    items,
+    statuses,
+    symbolIds,
+    size: marker?.size ?? DEFAULT_MARKER_SIZE,
+    statusSignature,
+    label: labels?.marker ?? defaultMarkerLabel,
+  });
+
+  const sprite = <IconSprite statuses={statuses} symbolIds={symbolIds} />;
+
   const onReadyRef = useLatest(onReady);
   useEffect(() => {
     if (map) onReadyRef.current?.(map);
@@ -95,5 +162,5 @@ export function useStatusMap<K extends string = string, D = unknown>(
     onDataQualityRef.current?.(dataQualityRef.current);
   }, [qualitySignature, onDataQualityRef, dataQualityRef]);
 
-  return { containerRef, map, dataQuality, fit, invalidateSize };
+  return { containerRef, map, sprite, dataQuality, fit, invalidateSize };
 }

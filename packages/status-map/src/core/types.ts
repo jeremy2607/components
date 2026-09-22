@@ -1,7 +1,21 @@
-/** Couple latitude / longitude, en degres decimaux. */
+import type { ReactNode } from 'react';
+
+declare module 'leaflet' {
+  interface MarkerOptions {
+    /**
+     * Statut porté par le marqueur lui-même, renseigné par `StatusMap`.
+     *
+     * Le regroupement lit cette valeur, jamais un nom de classe CSS : la
+     * sévérité est une donnée, pas une apparence.
+     */
+    status?: string;
+  }
+}
+
+/** Couple latitude / longitude, en degrés décimaux. */
 export type LatLngTuple = readonly [lat: number, lng: number];
 
-/** Couple de pixels, utilise pour les marges de cadrage. */
+/** Couple de pixels, utilisé pour les marges de cadrage. */
 export type PointTuple = readonly [x: number, y: number];
 
 /**
@@ -24,6 +38,33 @@ export type Located<T> = T & { lat: number; lng: number };
 
 /** Élément dont les coordonnées sont exploitables. Voir `isLocated`. */
 export type LocatedItem<K extends string = string, D = unknown> = Located<StatusItem<K, D>>;
+
+/**
+ * Apparence et gravité d'un statut.
+ *
+ * `severity` est la seule source de vérité pour la couleur d'un regroupement :
+ * plus la valeur est haute, plus le statut est grave.
+ */
+export interface StatusDefinition {
+  color: string;
+  severity: number;
+  /**
+   * Contenu SVG dessiné dans une boîte de 24 par 24, par exemple un `<path>`.
+   * Rendu une seule fois par statut, jamais une fois par marqueur.
+   */
+  icon?: ReactNode;
+  /** Statut en toutes lettres, repris par les noms accessibles. */
+  label?: string;
+}
+
+/** Registre ouvert : ajouter un statut, c'est ajouter une entrée. */
+export type StatusRegistry<K extends string = string> = Readonly<Record<K, StatusDefinition>>;
+
+/** Géométrie des marqueurs. Les ancres en découlent. */
+export interface MarkerConfig {
+  /** Côté de la pastille, en pixels. Défaut : 36. */
+  size?: number;
+}
 
 /** Fond de carte. Injecté par le consommateur, jamais codé en dur. */
 export interface TileConfig {
@@ -63,8 +104,13 @@ export interface DataQualityReport {
   severity: 'error' | 'warning' | null;
 }
 
-/** Libelles visibles. Le paquet n'embarque aucune prose. */
-export interface StatusMapLabels {
+/** Libellés visibles. Le paquet n'embarque aucune prose. */
+export interface StatusMapLabels<K extends string = string, D = unknown> {
   /** Nom accessible du conteneur de carte. */
   map?: string;
+  /**
+   * Nom accessible d'un marqueur. Par défaut, l'identifiant suivi du libellé
+   * du statut : une interpolation de vos données, aucune phrase du paquet.
+   */
+  marker?: (item: StatusItem<K, D>, status: StatusDefinition, key: K) => string;
 }

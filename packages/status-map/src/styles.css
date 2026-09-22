@@ -14,15 +14,69 @@
  *   --sm-radius              rayon des coins du conteneur
  *   --sm-attribution-bg      fond du bloc d'attribution
  *   --sm-attribution-text    texte du bloc d'attribution
+ *   --sm-marker-ink          glyphe des marqueurs, posé sur la couleur du statut
+ *   --sm-marker-ring         liseré qui détache le marqueur du fond de carte.
+ *                            Il se pose sur les tuiles, pas sur l'interface :
+ *                            à changer seulement pour un fond de carte sombre.
+ *   --sm-focus               couleur de l'anneau de focus
  */
 
 .sm-map {
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--sm-map-bg, #e9edf2);
   border-radius: var(--sm-radius, 0);
   font-family: var(--sm-font, inherit);
+}
+
+.sm-map__canvas {
+  position: absolute;
+  inset: 0;
+  background: var(--sm-map-bg, #e9edf2);
+  border-radius: inherit;
+}
+
+/* Le sprite ne sert qu'à définir les symboles : il ne doit rien occuper. */
+.sm-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.sm-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sm-marker__badge {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sm-marker-color);
+  color: var(--sm-marker-ink, #10161f);
+  box-shadow:
+    0 0 0 2px var(--sm-marker-ring, #fff),
+    0 2px 6px rgb(16 22 30 / 28%);
+}
+
+.sm-marker__glyph {
+  width: 60%;
+  height: 60%;
+}
+
+.sm-marker:focus {
+  outline: none;
+}
+
+.sm-marker:focus-visible .sm-marker__badge {
+  box-shadow:
+    0 0 0 2px var(--sm-marker-ring, #fff),
+    0 0 0 5px var(--sm-focus, #2563eb);
 }
 
 .sm-map .leaflet-control-attribution {
@@ -38,7 +92,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .sm-map {
+  .sm-map__canvas {
     background: var(--sm-map-bg, #1b2430);
   }
 

@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import type { StatusMapLabels } from './core/types';
 import { useStatusMap, type UseStatusMapOptions } from './useStatusMap';
 
 export interface StatusMapProps<K extends string = string, D = unknown> extends UseStatusMapOptions<
@@ -8,24 +7,25 @@ export interface StatusMapProps<K extends string = string, D = unknown> extends 
 > {
   className?: string;
   style?: CSSProperties;
-  labels?: StatusMapLabels;
 }
 
 export function StatusMap<K extends string = string, D = unknown>({
   className,
   style,
-  labels,
   ...options
 }: StatusMapProps<K, D>) {
-  const { containerRef } = useStatusMap(options);
+  const { containerRef, sprite } = useStatusMap(options);
+  const label = options.labels?.map;
 
   return (
-    <div
-      ref={containerRef}
-      className={className ? `sm-map ${className}` : 'sm-map'}
-      style={style}
-      role={labels?.map ? 'region' : undefined}
-      aria-label={labels?.map}
-    />
+    <div className={className ? `sm-map ${className}` : 'sm-map'} style={style}>
+      {sprite}
+      <div
+        ref={containerRef}
+        className="sm-map__canvas"
+        role={label ? 'region' : undefined}
+        aria-label={label}
+      />
+    </div>
   );
 }

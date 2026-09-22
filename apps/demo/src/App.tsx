@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StatusMap, type DataQualityReport, type ViewConfig } from '@jeremyprat/status-map';
 import { DataQualityNotice } from './components/DataQualityNotice';
 import { generateSites } from './data/generateSites';
+import { statuses } from './statuses';
 import { tiles } from './tiles';
 import { useDismissible } from './useDismissible';
 
@@ -31,10 +32,14 @@ export function App() {
       <main className="app__map">
         <StatusMap
           items={sites}
+          statuses={statuses}
           tiles={tiles}
           view={view}
           onDataQuality={setReport}
-          labels={{ map: 'Carte du parc' }}
+          labels={{
+            map: 'Carte du parc',
+            marker: (item, status) => `${item.data?.name ?? item.id}, ${status.label ?? ''}`,
+          }}
         />
       </main>
     </div>
