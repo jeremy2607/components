@@ -6,6 +6,7 @@ import {
   type ViewConfig,
 } from '@jeremyprat/status-map';
 import { DataQualityNotice } from './components/DataQualityNotice';
+import { SimulationControls } from './components/SimulationControls';
 import { SitePanel } from './components/SitePanel';
 import { SitePopup } from './components/SitePopup';
 import { generateSites } from './data/generateSites';
@@ -20,6 +21,7 @@ import {
 } from './filters';
 import { statuses } from './statuses';
 import { tiles } from './tiles';
+import { useActivitySimulator } from './useActivitySimulator';
 import { useDismissible } from './useDismissible';
 
 const view: ViewConfig = { defaultCenter: [46.6, 2.4], defaultZoom: 6 };
@@ -32,17 +34,26 @@ const cluster: ClusterConfig = {
 const LOCALE = 'fr-FR';
 
 // Un seul parc par chargement de page, tiré à l'import : le rendu reste pur.
-const sites = generateSites();
+const parc = generateSites();
 
 export function App() {
   const [report, setReport] = useState<DataQualityReport | null>(null);
-  const [selected, setSelected] = useState<Site | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<SiteFilters>(EMPTY_FILTERS);
   const { dismissed, dismiss } = useDismissible('data-quality');
+  const simulation = useActivitySimulator(parc);
 
-  const visible = useMemo(() => filterSites(sites, filters), [filters]);
-  const counts = useMemo(() => countsForToggles(sites, filters), [filters]);
+  const { sites } = simulation;
+  const visible = useMemo(() => filterSites(sites, filters), [sites, filters]);
+  const counts = useMemo(() => countsForToggles(sites, filters), [sites, filters]);
   const filtered = isFiltered(filters);
+
+  // La sélection est un identifiant, pas un instantané : un statut qui bascule
+  // ne doit pas laisser une copie périmée dans l'en-tête.
+  const selected = selectedId ? (sites.find((site) => site.id === selectedId) ?? null) : null;
+  const select = (site: Site) => {
+    setSelectedId(site.id);
+  };
 
   return (
     <div className="app">
@@ -54,20 +65,26 @@ export function App() {
           </p>
         </div>
         <div className="app__aside">
+          <SimulationControls
+            running={simulation.running}
+            changed={simulation.changed}
+            onToggle={simulation.toggle}
+            onReset={simulation.reset}
+          />
           {selected && (
             <p className="app__selection">
               <span className="app__selection-name">{selected.data.name}</span>
               <button
                 type="button"
                 onClick={() => {
-                  setSelected(null);
+                  setSelectedId(null);
                 }}
               >
                 Désélectionner
               </button>
             </p>
           )}
-          <p className="app__count">{sites.length} sites</p>
+          <p className="app__count">{parc.length} sites</p>
         </div>
       </header>
 
@@ -76,12 +93,12 @@ export function App() {
       <div className="app__body">
         <SitePanel
           sites={visible}
-          total={sites.length}
+          total={parc.length}
           statuses={statuses}
           counts={counts}
           filters={filters}
           filtered={filtered}
-          selectedId={selected?.id ?? null}
+          selectedId={selectedId}
           locale={LOCALE}
           onSearch={(search) => {
             setFilters((current) => ({ ...current, search }));
@@ -95,7 +112,7 @@ export function App() {
           onReset={() => {
             setFilters(EMPTY_FILTERS);
           }}
-          onSelect={setSelected}
+          onSelect={select}
         />
 
         <main className="app__map">
@@ -106,11 +123,11 @@ export function App() {
             view={view}
             cluster={cluster}
             locale={LOCALE}
-            selectedId={selected?.id ?? null}
-            onSelect={setSelected}
+            selectedId={selectedId}
+            onSelect={select}
             onDataQuality={setReport}
             renderPopup={(site, context) => (
-              <SitePopup site={site} context={context} onOpenDetails={setSelected} />
+              <SitePopup site={site} context={context} onOpenDetails={select} />
             )}
             labels={{
               map: 'Carte du parc',

@@ -532,3 +532,92 @@ body {
   outline: 2px solid var(--text);
   outline-offset: 1px;
 }
+
+/* --- Simulation --- */
+
+.sim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim__toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sim__toggle:hover {
+  border-color: var(--muted);
+}
+
+.sim__toggle[aria-pressed='true'] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--surface);
+}
+
+.sim__toggle:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.sim__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.sim__pulse--on {
+  background: #1ed760;
+  animation: sim-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sim-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim__pulse--on {
+    animation: none;
+  }
+}
+
+.sim__reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.sim__state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

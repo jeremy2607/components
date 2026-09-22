@@ -196,6 +196,50 @@ describe('bulle au survol', () => {
     expect(onSelect.mock.calls[0]?.[0]).toMatchObject({ id: 'b', status: 'offline' });
   });
 
+  it('suit le statut qui bascule sous le curseur', () => {
+    const { container, rerender } = renderMap();
+    fireEvent.mouseOver(markerAt(container, 0));
+    expect(screen.getByText('en service')).toBeInTheDocument();
+
+    rerender(
+      <StatusMap
+        items={[{ id: 'a', status: 'offline', lat: 43.7, lng: 7.26 }, items[1] as StatusItem]}
+        statuses={statuses}
+        tiles={tiles}
+        view={view}
+        cluster={noCluster}
+        renderPopup={(item, context) => (
+          <div>
+            <h2>{item.id}</h2>
+            <p>{context.status.label}</p>
+          </div>
+        )}
+      />,
+    );
+
+    expect(screen.getByText('hors ligne')).toBeInTheDocument();
+    expect(screen.queryByText('en service')).not.toBeInTheDocument();
+  });
+
+  it("ferme la bulle quand l'élément survolé disparaît de la liste", () => {
+    const { container, rerender } = renderMap();
+    fireEvent.mouseOver(markerAt(container, 0));
+    expect(screen.getByRole('heading', { name: 'a' })).toBeInTheDocument();
+
+    rerender(
+      <StatusMap
+        items={[items[1] as StatusItem]}
+        statuses={statuses}
+        tiles={tiles}
+        view={view}
+        cluster={noCluster}
+        renderPopup={(item) => <h2>{item.id}</h2>}
+      />,
+    );
+
+    expect(screen.queryByRole('heading', { name: 'a' })).not.toBeInTheDocument();
+  });
+
   it('ne laisse ni bulle ni minuteur en vol après démontage', () => {
     const { container, unmount } = renderMap();
     const marker = markerAt(container, 0);

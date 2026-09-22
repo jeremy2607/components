@@ -1,4 +1,5 @@
 import { ANCHORS } from './anchors';
+import { lastContactFor } from './lastContact';
 import { createRandom, randomInt, weightedPick } from './random';
 import { SITE_TAGS, type Site, type SiteStatus, type SiteTag } from './types';
 
@@ -36,7 +37,6 @@ const STATUS_WEIGHTS = [
 ] as const satisfies readonly (readonly [SiteStatus, number])[];
 
 const KM_PER_DEGREE = 111.32;
-const MINUTE = 60_000;
 
 /** Part des sites privés de coordonnées, pour exercer le message de données manquantes. */
 const MISSING_COORDINATES_RATE = 0.045;
@@ -54,17 +54,6 @@ export interface GenerateSitesOptions {
  */
 function spread(random: () => number): number {
   return random() + random() - 1;
-}
-
-function lastContactFor(status: SiteStatus, random: () => number, now: number): string {
-  const minutesAgo =
-    status === 'offline'
-      ? 120 + randomInt(random, 12_000)
-      : status === 'warning'
-        ? 2 + randomInt(random, 58)
-        : randomInt(random, 10);
-
-  return new Date(now - minutesAgo * MINUTE).toISOString();
 }
 
 function tagsFor(random: () => number): readonly SiteTag[] {

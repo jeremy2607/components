@@ -18,6 +18,8 @@ const MARKER_GAP = 8;
 export interface UsePopupOptions<T extends AnyStatusItem> {
   mapRef: { readonly current: L.Map | null };
   map: L.Map | null;
+  /** Source de vérité du contenu : la bulle relit l'élément, elle ne le fige pas. */
+  items: readonly T[];
   statuses: StatusRegistry<T['status']>;
   render: ((item: T, context: PopupContext<T['status']>) => ReactNode) | undefined;
   config: PopupConfig | undefined;
@@ -52,9 +54,9 @@ function restartEnterAnimation(element: HTMLElement | null | undefined): void {
  * d'événements, les liens de routeur et le contexte React continuent d'y vivre.
  */
 export function usePopup<T extends AnyStatusItem>(options: UsePopupOptions<T>): UsePopupResult<T> {
-  const { map, mapRef, markerSize, locale, statuses, render } = options;
+  const { map, mapRef, markerSize, locale, statuses, render, items } = options;
 
-  const [target, setTarget] = useState<{ item: T; position: L.LatLng } | null>(null);
+  const [target, setTarget] = useState<{ id: string; position: L.LatLng } | null>(null);
   const [container] = useState(() => {
     const node = document.createElement('div');
     node.className = 'sm-popup__content';
@@ -104,7 +106,7 @@ export function usePopup<T extends AnyStatusItem>(options: UsePopupOptions<T>): 
   const open = useCallback(
     (item: T, position: L.LatLng) => {
       cancelClose();
-      setTarget({ item, position });
+      setTarget({ id: item.id, position });
     },
     [cancelClose],
   );
@@ -174,12 +176,18 @@ export function usePopup<T extends AnyStatusItem>(options: UsePopupOptions<T>): 
    * Effet de mise en page : le contenu du portail est déjà dans le conteneur
    * quand il s'exécute, donc Leaflet mesure une bulle pleine et la place juste.
    */
+  /*
+   * L'élément est relu à chaque rendu : un statut qui bascule sous le curseur
+   * doit changer la bulle, et un élément qui disparaît d'`items` doit la fermer.
+   */
+  const item = target ? items.find((candidate) => candidate.id === target.id) : undefined;
+
   useLayoutEffect(() => {
     const instance = mapRef.current;
     const popup = popupRef.current;
     if (!instance || !popup) return;
 
-    if (!target) {
+    if (!target || !item) {
       instance.closePopup(popup);
       return;
     }
@@ -189,18 +197,15 @@ export function usePopup<T extends AnyStatusItem>(options: UsePopupOptions<T>): 
     if (!instance.hasLayer(popup)) instance.openPopup(popup);
     popup.update();
     restartEnterAnimation(popup.getElement());
-  }, [target, container, mapRef]);
+  }, [target, item, container, mapRef]);
 
-  const statusKey = target?.item.status;
+  const statusKey = item?.status;
   const lookup: StatusLookup = statuses;
   const definition = statusKey ? lookup[statusKey] : undefined;
 
   const node =
-    target && definition && statusKey && render
-      ? createPortal(
-          render(target.item, { status: definition, statusKey, close, locale }),
-          container,
-        )
+    item && definition && statusKey && render
+      ? createPortal(render(item, { status: definition, statusKey, close, locale }), container)
       : null;
 
   return { node, open, scheduleClose, cancelClose, close };

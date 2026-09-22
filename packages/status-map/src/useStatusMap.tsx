@@ -183,6 +183,7 @@ export function useStatusMap<T extends AnyStatusItem = StatusItem>(
   const bubble = usePopup<T>({
     map,
     mapRef,
+    items,
     statuses,
     render: renderPopup,
     config: popup,
