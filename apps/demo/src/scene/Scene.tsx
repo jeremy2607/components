@@ -64,22 +64,36 @@ export default function Scene({ focus, settings, tier }: SceneProps) {
     if (!canvas) return;
 
     const labels = labelsRef.current;
-    const handle = createScene({
-      canvas,
-      graph,
-      layout,
-      settings,
-      layers: LAYERS,
-      onSelect: (ref) => {
-        navigate(hrefFor(ref));
-      },
-      onHover: (node) => {
-        setHint(hintFor(node, tier));
-      },
-      // Contexte perdu : la galerie repasse en 2D plutôt que d'afficher une
-      // image morte que rien ne rafraîchira.
-      onLost: demote,
-    });
+    let handle: SceneHandle;
+
+    /*
+     * Monter la scène peut échouer pour des raisons qui n'ont rien à voir avec
+     * la galerie : un contexte WebGL refusé parce que le navigateur en a déjà
+     * trop d'ouverts, un pilote qui renonce. Le repli en 2D est une réponse
+     * correcte à tout ça ; laisser l'erreur remonter n'en est pas une, puisque
+     * React démonterait la page entière pour un ornement.
+     */
+    try {
+      handle = createScene({
+        canvas,
+        graph,
+        layout,
+        settings,
+        layers: LAYERS,
+        onSelect: (ref) => {
+          navigate(hrefFor(ref));
+        },
+        onHover: (node) => {
+          setHint(hintFor(node, tier));
+        },
+        // Contexte perdu : la galerie repasse en 2D plutôt que d'afficher une
+        // image morte que rien ne rafraîchira.
+        onLost: demote,
+      });
+    } catch {
+      demote();
+      return;
+    }
 
     handleRef.current = handle;
     handle.setLabels(labels);

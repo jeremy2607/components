@@ -887,13 +887,21 @@ export function createScene(options: SceneOptions): SceneHandle {
       plates.dispose();
 
       scene.clear();
-      renderer.dispose();
       /*
-       * Rendre le contexte tout de suite plutôt que d'attendre le ramasse-
-       * miettes : un navigateur n'en garde qu'une poignée, et la galerie peut
-       * basculer en 2D puis revenir plusieurs fois dans la même visite.
+       * `dispose` et rien d'autre.
+       *
+       * Il y avait ici un `forceContextLoss()`, censé rendre le contexte tout
+       * de suite plutôt que d'attendre le ramasse-miettes. Il faisait bien
+       * pire : un canevas dont on a forcé la perte de contexte ne peut plus
+       * jamais en obtenir un. En développement, `StrictMode` monte, démonte et
+       * remonte les effets sur le même canevas — le second montage recevait
+       * donc `null`, three levait, et faute de barrière d'erreur toute la
+       * galerie disparaissait. La page était blanche.
+       *
+       * Le canevas est retiré du DOM par React au démontage : son contexte
+       * part avec lui, sans qu'on ait à l'achever.
        */
-      renderer.forceContextLoss();
+      renderer.dispose();
     },
   };
 }

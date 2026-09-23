@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { useGallery } from '../store/useGallery';
+import { SceneBoundary } from './SceneBoundary';
 import { settingsFor } from './tiers';
 import { useTier } from './useTier';
 
@@ -23,6 +24,7 @@ export function SceneHost({ focus }: SceneHostProps) {
   const tier = useTier();
   const view = useGallery((state) => state.view);
   const demoted = useGallery((state) => state.demoted);
+  const demote = useGallery((state) => state.demote);
 
   // `settingsFor` rend une constante de module : son identité ne change pas,
   // donc la scène n'est pas reconstruite à chaque rendu de la galerie.
@@ -31,9 +33,16 @@ export function SceneHost({ focus }: SceneHostProps) {
 
   return (
     <div className="h-[62vh] min-h-[22rem] border-b border-line bg-ink-0 sm:h-[68vh]">
-      <Suspense fallback={null}>
-        <Scene focus={focus} settings={settings} tier={tier} />
-      </Suspense>
+      {/*
+       * La scène est ornementale : si elle échoue, elle disparaît, et la
+       * galerie continue. Sans cette barrière, une erreur du canevas remonte
+       * jusqu'à la racine et démonte la page entière.
+       */}
+      <SceneBoundary onFail={demote}>
+        <Suspense fallback={null}>
+          <Scene focus={focus} settings={settings} tier={tier} />
+        </Suspense>
+      </SceneBoundary>
     </div>
   );
 }
