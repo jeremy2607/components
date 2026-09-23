@@ -61,11 +61,34 @@ simplement omises, parce qu'une URL absolue fausse vaut moins que pas d'URL.
 ## Déploiement statique
 
 ```bash
-pnpm build
+SITE_URL=https://composants.exemple.fr pnpm build
 ```
 
 L'artefact est dans `apps/demo/dist`. Il est construit en **base absolue** : le site
 est servi à la racine d'un domaine ou d'un sous-domaine, pas dans un sous-dossier.
+
+`SITE_URL` n'est pas facultative en production. Sans elle, le build reste
+valide, mais il sort **sans** URL canoniques, sans `og:url`, sans `sitemap.xml`,
+sans `robots.txt` et sans données structurées : ces quatre choses ont besoin
+d'une URL absolue, et une URL absolue inventée vaut moins que rien. Le script de
+pré-rendu le dit sur sa sortie.
+
+### Mise en ligne, pas à pas
+
+1. `SITE_URL=https://votre-domaine pnpm build`
+2. Téléverser le **contenu** de `apps/demo/dist` à la racine servie — le
+   contenu, pas le dossier : `index.html` doit se retrouver à la racine.
+3. Vérifier que `.htaccess` est bien monté. Les hébergeurs mutualisés masquent
+   les fichiers qui commencent par un point : il faut souvent activer
+   « afficher les fichiers cachés » dans le gestionnaire de fichiers.
+4. Ouvrir `/sitemap.xml` et `/robots.txt` dans un navigateur : s'ils répondent,
+   le reste est en place.
+5. Vérifier une URL profonde, `/components/status-map/`, **en la tapant
+   directement** plutôt qu'en navigant depuis l'accueil. C'est le seul test qui
+   distingue un vrai fichier pré-rendu d'une réécriture côté client.
+
+Rien à compiler sur le serveur : ni Node, ni base de données, ni variable
+d'environnement. C'est un dossier de fichiers.
 
 C'est la contrepartie du pré-rendu : chaque composant a son propre
 `components/<id>/index.html`, et un chemin d'asset relatif y pointerait à côté.

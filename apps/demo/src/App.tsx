@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { metaById } from './catalog';
-import { useFullscreen, useRoute } from './router';
+import { hrefFor, useFullscreen, useRoute } from './router';
 import { SceneHost } from './scene/SceneHost';
 import { ComponentPage } from './ui/ComponentPage';
 import { FullscreenDemo } from './ui/FullscreenDemo';
@@ -25,7 +25,22 @@ export function App() {
     window.scrollTo(0, 0);
   }, [route.name, meta?.id]);
 
-  useDocumentMeta(HOME_TITLE, HOME_DESCRIPTION, '/');
+  /*
+   * Les métadonnées sont décidées ici, et ici seulement.
+   *
+   * Elles vivaient à deux endroits : `App` posait celles de l'accueil, la page
+   * d'un composant posait les siennes. React exécutant les effets des enfants
+   * avant ceux du parent, la page posait les bonnes valeurs et `App` les
+   * écrasait aussitôt par celles de l'accueil. Le HTML pré-rendu restait juste,
+   * mais dès que React montait, le titre, la description et l'URL canonique de
+   * chaque composant redevenaient ceux de la page d'accueil — y compris pour
+   * les robots qui exécutent le JavaScript. Une seule source, plus de course.
+   */
+  useDocumentMeta(
+    playable && meta ? meta.seo.title : HOME_TITLE,
+    playable && meta ? meta.seo.description : HOME_DESCRIPTION,
+    playable && meta ? hrefFor(meta.id) : '/',
+  );
 
   if (meta && playable && fullscreen) {
     return <FullscreenDemo id={meta.id} title={meta.title} />;

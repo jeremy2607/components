@@ -46,6 +46,7 @@ import {
   strataPose,
   type Pose,
 } from './camera.ts';
+import { declutter, type LabelBox } from './declutter.ts';
 import { componentNodeId, techNodeId, type Graph, type GraphNode } from './graph.ts';
 import { boundsOf, type Layout } from './layout.ts';
 import { readPalette } from './palette.ts';
@@ -81,6 +82,11 @@ const PICK_RADIUS = 26;
 const UNFOLD_SECONDS = 0.85;
 /** Fils au maximum par couche : borne la géométrie des strates, allouée une fois. */
 const MAX_TECH_PER_LAYER = 12;
+/*
+ * Rayon d'une plaque une fois la pile ouverte, dans les unités du monde. La
+ * caméra en a besoin pour cadrer : une pile est aussi large que ses plaques.
+ */
+const PLATE_RADIUS = 1.9;
 
 function radiusOf(node: GraphNode): number {
   return node.kind === 'component' ? 0.72 + node.degree * 0.05 : 0.44 + node.degree * 0.07;
@@ -325,7 +331,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     // ouvert, on recule pour cadrer la pile entière.
     return unfoldProgress < 0.05
       ? focusPose(position, bounds, aspect())
-      : strataPose(position, strataHeight(layers[focused] ?? []), bounds, aspect());
+      : strataPose(position, strataHeight(layers[focused] ?? []), PLATE_RADIUS, bounds, aspect());
   }
 
   function targetPose(): Pose {
@@ -467,7 +473,7 @@ export function createScene(options: SceneOptions): SceneHandle {
       // s'ouvre depuis sa place dans le graphe, il ne saute pas ailleurs.
       const y = origin.y + (layer.position.y - origin.y) * eased;
       dummy.position.set(origin.x, y, origin.z);
-      dummy.scale.setScalar(0.4 + eased * 1.5);
+      dummy.scale.setScalar(0.4 + eased * (PLATE_RADIUS - 0.4));
       dummy.updateMatrix();
       plates.setMatrixAt(slot, dummy.matrix);
 
@@ -513,6 +519,17 @@ export function createScene(options: SceneOptions): SceneHandle {
 
   /* ------------------------------------------------------------ étiquettes */
 
+  /*
+   * Largeur d'une étiquette, estimée plutôt que mesurée.
+   *
+   * Les étiquettes sont en chasse fixe : la largeur se déduit du nombre de
+   * caractères, à un poil près. Lire `offsetWidth` donnerait la valeur exacte,
+   * mais forcerait un recalcul de mise en page par étiquette et par image,
+   * c'est-à-dire exactement ce qu'on évite quand on écrit dans `transform`.
+   */
+  const CHAR_WIDTH = 6.65;
+  const LABEL_HEIGHT = 15;
+
   function placeLabels(): void {
     if (labels.size === 0) return;
 
@@ -521,6 +538,9 @@ export function createScene(options: SceneOptions): SceneHandle {
     const focusedId = focused === null ? null : componentNodeId(focused);
     // De quoi convertir un rayon du monde en pixels, à une distance donnée.
     const halfPlane = Math.tan((FOV * Math.PI) / 180 / 2);
+
+    const candidates: LabelBox[] = [];
+    const places = new Map<string, { x: number; y: number }>();
 
     graph.nodes.forEach((node, index) => {
       const element = labels.get(node.id);
@@ -537,10 +557,11 @@ export function createScene(options: SceneOptions): SceneHandle {
         hovered === index ||
         node.ref === highlighted ||
         (focusedId !== null && linked(focusedId, node.id));
-      const shown = wanted && !behind;
 
-      element.hidden = !shown;
-      if (!shown) return;
+      if (!wanted || behind) {
+        element.hidden = true;
+        return;
+      }
 
       /*
        * L'étiquette se pose sous la bille, pas dessus. Le décalage est le
@@ -553,10 +574,38 @@ export function createScene(options: SceneOptions): SceneHandle {
 
       const x = Math.round((projected.x * 0.5 + 0.5) * width);
       const y = Math.round((-projected.y * 0.5 + 0.5) * height + pixels + 8);
+      const boxWidth = node.label.length * CHAR_WIDTH;
 
-      element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      element.style.opacity = isDimmed(node) ? '0.25' : '1';
+      places.set(node.id, { x, y });
+      candidates.push({
+        id: node.id,
+        // Le texte est centré sous le noeud : le rectangle l'est aussi.
+        x: x - boxWidth / 2,
+        y,
+        width: boxWidth,
+        height: LABEL_HEIGHT,
+        // Ce qu'on regarde passe devant un composant, qui passe devant une techno.
+        priority:
+          hovered === index || node.id === focusedId ? 2 : node.kind === 'component' ? 1 : 0,
+        depth: projected.z,
+      });
     });
+
+    const gardees = declutter(candidates);
+
+    for (const candidate of candidates) {
+      const element = labels.get(candidate.id);
+      const place = places.get(candidate.id);
+      const node = graph.nodes[indexOf.get(candidate.id) ?? -1];
+      if (!element || !place || !node) continue;
+
+      const shown = gardees.has(candidate.id);
+      element.hidden = !shown;
+      if (!shown) continue;
+
+      element.style.transform = `translate3d(${place.x}px, ${place.y}px, 0)`;
+      element.style.opacity = isDimmed(node) ? '0.25' : '1';
+    }
   }
 
   /* ---------------------------------------------------------------- boucle */

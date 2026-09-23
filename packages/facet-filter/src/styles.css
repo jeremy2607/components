@@ -60,7 +60,15 @@
   opacity: var(--ff-disabled-opacity, 0.4);
 }
 
+/*
+ * Le compte est secondaire, mais il reste du texte à lire.
+ *
+ * À 0,7 d'opacité sur une surface sombre, il tombait à 4,46:1 — sous les 4,5
+ * exigés pour du petit texte. Atténuer se paie en contraste, et un chiffre
+ * qu'on ne déchiffre pas ne sert à rien : 0,8 garde la hiérarchie visuelle et
+ * repasse au-dessus du seuil.
+ */
 .ff-chip__count {
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
+  opacity: var(--ff-count-opacity, 0.8);
 }

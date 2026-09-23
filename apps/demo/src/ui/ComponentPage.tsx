@@ -1,5 +1,4 @@
 import { techOf } from '../catalog';
-import { hrefFor } from '../router';
 import type { ComponentMeta } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { DemoFrame } from './DemoFrame';
@@ -7,15 +6,12 @@ import { Link } from './Link';
 import { PropsTable } from './PropsTable';
 import { StackDiagram } from './StackDiagram';
 import { TechChip } from './TechChip';
-import { useDocumentMeta } from './useDocumentMeta';
 
 interface ComponentPageProps {
   meta: ComponentMeta;
 }
 
 export function ComponentPage({ meta }: ComponentPageProps) {
-  useDocumentMeta(meta.seo.title, meta.seo.description, hrefFor(meta.id));
-
   return (
     <article className="mx-auto max-w-6xl px-6 pb-24">
       <nav className="py-6">

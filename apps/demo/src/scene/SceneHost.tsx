@@ -32,7 +32,7 @@ export function SceneHost({ focus }: SceneHostProps) {
   return (
     <div className="h-[62vh] min-h-[22rem] border-b border-line bg-ink-0 sm:h-[68vh]">
       <Suspense fallback={null}>
-        <Scene focus={focus} settings={settings} />
+        <Scene focus={focus} settings={settings} tier={tier} />
       </Suspense>
     </div>
   );

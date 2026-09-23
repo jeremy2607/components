@@ -76,19 +76,40 @@ describe('focusPose', () => {
 
 describe('strataPose', () => {
   const node = { x: 0, y: 0, z: 10 };
+  const RAYON = 1.9;
 
   it('se place au-dessus de la pile pour que les couches se lisent', () => {
-    expect(strataPose(node, 8, bounds, 1.6).position.y).toBeGreaterThan(node.y);
+    expect(strataPose(node, 8, RAYON, bounds, 1.6).position.y).toBeGreaterThan(node.y);
   });
 
   it('recule quand la pile est plus haute', () => {
-    const courte = strataPose(node, 4, bounds, 1.6);
-    const haute = strataPose(node, 12, bounds, 1.6);
+    const courte = strataPose(node, 4, RAYON, bounds, 1.6);
+    const haute = strataPose(node, 12, RAYON, bounds, 1.6);
     expect(haute.position.z).toBeGreaterThan(courte.position.z);
   });
 
+  it('recule aussi quand les plaques sont plus larges', () => {
+    const etroite = strataPose(node, 4, 1, bounds, 1.6);
+    const large = strataPose(node, 4, 6, bounds, 1.6);
+    expect(large.position.z).toBeGreaterThan(etroite.position.z);
+  });
+
+  it('cadre la largeur des plaques sur un écran étroit', () => {
+    // Le défaut corrigé : une pile basse mais large débordait du cadre, parce
+    // que seule la hauteur était prise en compte.
+    const pose = strataPose(node, 4.2, RAYON, bounds, 0.75);
+    const distance = pose.position.z - node.z;
+    const demiLargeur = distance * Math.tan((50 * Math.PI) / 180 / 2) * 0.75;
+    expect(demiLargeur).toBeGreaterThan(RAYON);
+  });
+
   it('survit à une pile d’une seule couche', () => {
-    expect(Number.isFinite(strataPose(node, 0, bounds, 1.6).position.z)).toBe(true);
+    expect(Number.isFinite(strataPose(node, 0, RAYON, bounds, 1.6).position.z)).toBe(true);
+  });
+
+  it('survit à un rayon de plaque nul ou négatif', () => {
+    expect(Number.isFinite(strataPose(node, 4, 0, bounds, 1.6).position.z)).toBe(true);
+    expect(Number.isFinite(strataPose(node, 4, -3, bounds, 1.6).position.z)).toBe(true);
   });
 });
 

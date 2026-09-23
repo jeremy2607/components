@@ -87,7 +87,11 @@ export function FacetFilterDemo() {
           )}
         </p>
 
-        <ul className="ffd__list">
+        {/*
+         * La liste défile et ne contient rien de focalisable : sans `tabindex`,
+         * personne au clavier ne peut la faire défiler.
+         */}
+        <ul className="ffd__list" tabIndex={0} aria-label="Sites correspondant au filtre">
           {items.slice(0, SHOWN).map((site) => (
             <li key={site.id} className="ffd__item">
               <span

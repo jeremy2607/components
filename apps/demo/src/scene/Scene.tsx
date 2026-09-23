@@ -6,7 +6,7 @@ import { useGallery } from '../store/useGallery';
 import type { StackLayer } from '../types';
 import { graph, type GraphNode } from './graph';
 import { createScene, type SceneHandle } from './renderer';
-import type { TierSettings } from './tiers';
+import type { Tier, TierSettings } from './tiers';
 
 /*
  * Ce module est la frontière du morceau paresseux : c'est lui qui tire
@@ -26,22 +26,35 @@ interface SceneProps {
   /** Le composant de la route courante, ou rien en vue d'ensemble. */
   focus: string | null;
   settings: TierSettings;
+  tier: Tier;
 }
 
-function hintFor(node: GraphNode | null): string {
-  if (!node) return 'Glisser pour tourner · molette pour approcher';
+/*
+ * L'aide dépend du palier, parce qu'elle dépend de l'appareil : promettre une
+ * molette à qui tient un téléphone, c'est indiquer une commande qui n'existe
+ * pas. Le palier mobile est justement celui du pointeur grossier.
+ */
+function hintFor(node: GraphNode | null, tier: Tier): string {
+  if (!node) {
+    return tier === 'mobile'
+      ? 'Glisser pour tourner · toucher pour ouvrir'
+      : 'Glisser pour tourner · molette pour approcher';
+  }
   if (node.kind === 'tech') {
     const count = USAGE.get(node.id) ?? 0;
     return `${node.label} — ${count} composant${count > 1 ? 's' : ''}`;
   }
-  return node.reachable ? `${node.label} — cliquer pour ouvrir` : `${node.label} — à venir`;
+  if (!node.reachable) return `${node.label} — à venir`;
+  return tier === 'mobile'
+    ? `${node.label} — toucher pour ouvrir`
+    : `${node.label} — cliquer pour ouvrir`;
 }
 
-export default function Scene({ focus, settings }: SceneProps) {
+export default function Scene({ focus, settings, tier }: SceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef(new Map<string, HTMLElement>());
   const handleRef = useRef<SceneHandle | null>(null);
-  const [hint, setHint] = useState(() => hintFor(null));
+  const [hint, setHint] = useState(() => hintFor(null, tier));
 
   const techFilter = useGallery((state) => state.techFilter);
   const demote = useGallery((state) => state.demote);
@@ -61,7 +74,7 @@ export default function Scene({ focus, settings }: SceneProps) {
         navigate(hrefFor(ref));
       },
       onHover: (node) => {
-        setHint(hintFor(node));
+        setHint(hintFor(node, tier));
       },
       // Contexte perdu : la galerie repasse en 2D plutôt que d'afficher une
       // image morte que rien ne rafraîchira.
@@ -75,7 +88,7 @@ export default function Scene({ focus, settings }: SceneProps) {
       handleRef.current = null;
       handle.dispose();
     };
-  }, [settings, demote]);
+  }, [settings, tier, demote]);
 
   useEffect(() => {
     handleRef.current?.focus(focus);

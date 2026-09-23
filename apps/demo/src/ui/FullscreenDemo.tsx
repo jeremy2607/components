@@ -35,7 +35,12 @@ export function FullscreenDemo({ id, title }: FullscreenDemoProps) {
             navigate(hrefFor(id));
           }}
         >
-          fermer <kbd className="opacity-60">esc</kbd>
+          {/*
+            La touche est une indication secondaire, mais elle reste du texte à
+            lire : atténuée à 60 %, elle tombait sous le seuil de contraste. La
+            hiérarchie passe par la graisse et la bordure, pas par l'opacité.
+          */}
+          fermer <kbd className="rounded border border-line px-1 py-0.5">esc</kbd>
         </button>
       </div>
 

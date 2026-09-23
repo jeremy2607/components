@@ -7,7 +7,14 @@ interface PropsTableProps {
 
 export function PropsTable({ props, caption }: PropsTableProps) {
   return (
-    <div className="overflow-x-auto">
+    /*
+     * Le tableau déborde sur un écran étroit, et son conteneur défile. Un
+     * conteneur qui défile sans rien de focalisable dedans est inatteignable au
+     * clavier : on ne peut ni l'atteindre, ni le faire défiler. `tabindex` le
+     * met sur le chemin de la tabulation, et le rôle et le nom disent à quoi
+     * on vient d'arriver.
+     */
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
       <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>

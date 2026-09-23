@@ -84,10 +84,18 @@ export function focusPose(node: Point3, bounds: Bounds, aspect: number, fov: num
  * Les strates dépliées : on recule assez pour voir la pile entière, et on se
  * place légèrement au-dessus pour que les couches se lisent comme des plans
  * superposés et non comme un seul trait.
+ *
+ * Le cadrage tient compte des deux dimensions de la pile, pas seulement de sa
+ * hauteur. Une pile de plaques est aussi large que ses plaques, et sur un
+ * écran étroit c'est la largeur qui contraint : ne cadrer que la hauteur y
+ * faisait déborder les plaques hors du cadre. On encadre donc la sphère qui
+ * contient la pile, dont le rayon est l'hypoténuse de la demi-hauteur et du
+ * rayon des plaques.
  */
 export function strataPose(
   node: Point3,
   height: number,
+  plateRadius: number,
   bounds: Bounds,
   aspect: number,
   fov: number = FOV,
@@ -96,7 +104,8 @@ export function strataPose(
     { x: node.x - bounds.center.x, y: 0, z: node.z - bounds.center.z },
     { x: 0, y: 0, z: 1 },
   );
-  const distance = fitDistance(Math.max(height, 1) * 0.72, aspect, fov);
+  const englobante = Math.hypot(height / 2, Math.max(plateRadius, 0));
+  const distance = fitDistance(Math.max(englobante, 1) * 1.25, aspect, fov);
 
   return {
     position: {

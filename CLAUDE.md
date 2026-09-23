@@ -20,7 +20,7 @@ veut savoir comment c'est fait.
 | 2. Fondations : galerie 2D, jetons, registre, routage, pré-rendu | faite    |
 | 3. 3D : scène, graphe, strates, transitions, bascule 2D/3D       | faite    |
 | 4. Composants : les suivants, un par un                          | en cours |
-| 5. Finitions : perf mesurée, a11y, responsive, SEO, déploiement  | à faire  |
+| 5. Finitions : perf mesurée, a11y, responsive, SEO, déploiement  | en cours |
 
 Travail par étapes, avec validation de Jeremy entre chacune. À la fin de
 chaque étape : `pnpm check`, puis un commit.
@@ -165,8 +165,30 @@ en deux : ce que la carte d'accueil affiche, et ce que la page charge en même
 temps que sa démo.
 
 Par frame : moins de 60 appels de dessin en vue d'ensemble — il y en a quatre,
-six pendant un dépliage — DPR adaptatif de 1 à 1,75, pas d'ombres. Les images
-par seconde restent à mesurer sur une vraie machine, à l'étape 5.
+six pendant un dépliage — DPR adaptatif de 1 à 1,75, pas d'ombres.
+
+## Ce qui a été mesuré à l'étape 5
+
+Sur le site construit, servi en local.
+
+| Mesure                      | Accueil | Page composant |
+| --------------------------- | ------- | -------------- |
+| axe-core (WCAG 2.1 AA)      | 0       | 0              |
+| Lighthouse accessibilité    | 100     | 100            |
+| Lighthouse bonnes pratiques | 100     | 100            |
+| Lighthouse SEO              | 100     | 100            |
+| Décalage cumulé (CLS)       | 0       | 0              |
+
+axe-core tourne sur cinq routes et trois contextes — bureau en 3D, bureau en 2D,
+téléphone — soit quinze passages, tous à zéro violation.
+
+**Le score de performance de Lighthouse n'est pas retenu.** Il est mesuré ici
+dans un conteneur sans GPU, où WebGL passe par un rendu logiciel : la scène 3D y
+coûte artificiellement cher, et le chiffre ne dit rien de ce que verra un
+visiteur. Les images par seconde sur une vraie machine restent donc à mesurer,
+et c'est la seule case de l'étape 5 qui ne peut pas l'être d'ici.
+
+Aucun débordement horizontal à 390 pixels de large sur aucune page.
 
 ## Conventions de code
 
