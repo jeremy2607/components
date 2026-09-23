@@ -21,8 +21,13 @@ const FacetFilter = lazy(() =>
   import('./showcase/facet-filter/Demo').then((module) => ({ default: module.FacetFilterDemo })),
 );
 
+const BeforeAfter = lazy(() =>
+  import('./showcase/before-after/Demo').then((module) => ({ default: module.BeforeAfterDemo })),
+);
+
 export function Demo({ id }: { id: string }) {
   if (id === 'status-map') return <StatusMap />;
   if (id === 'facet-filter') return <FacetFilter />;
+  if (id === 'before-after') return <BeforeAfter />;
   return null;
 }

@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@jeremyprat/before-after": "workspace:*",
     "@jeremyprat/facet-filter": "workspace:*",
     "@jeremyprat/status-map": "workspace:*",
     "leaflet": "^1.9.4",

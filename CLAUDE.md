@@ -14,13 +14,13 @@ veut savoir comment c'est fait.
 
 ## Où en est le chantier
 
-| Étape                                                            | État    |
-| ---------------------------------------------------------------- | ------- |
-| 1. Concept, direction artistique, architecture, budget de perf   | validée |
-| 2. Fondations : galerie 2D, jetons, registre, routage, pré-rendu | faite   |
-| 3. 3D : scène, graphe, strates, transitions, bascule 2D/3D       | faite   |
-| 4. Composants : les suivants, un par un                          | à faire |
-| 5. Finitions : perf mesurée, a11y, responsive, SEO, déploiement  | à faire |
+| Étape                                                            | État     |
+| ---------------------------------------------------------------- | -------- |
+| 1. Concept, direction artistique, architecture, budget de perf   | validée  |
+| 2. Fondations : galerie 2D, jetons, registre, routage, pré-rendu | faite    |
+| 3. 3D : scène, graphe, strates, transitions, bascule 2D/3D       | faite    |
+| 4. Composants : les suivants, un par un                          | en cours |
+| 5. Finitions : perf mesurée, a11y, responsive, SEO, déploiement  | à faire  |
 
 Travail par étapes, avec validation de Jeremy entre chacune. À la fin de
 chaque étape : `pnpm check`, puis un commit.
@@ -142,18 +142,27 @@ Règles qui tiennent l'ensemble :
 
 Mesuré au dernier build, en gzip :
 
-| Morceau                         | Mesure   | Budget | Quand                  |
-| ------------------------------- | -------- | ------ | ---------------------- |
-| initial (React, shell, catalog) | 57,9 ko  | 70 ko  | toujours               |
-| CSS initial                     | 5,6 ko   | 12 ko  | toujours               |
-| fontes préchargées              | 51,5 ko  | 60 ko  | toujours               |
-| démo status-map (JS + CSS)      | 68,3 ko  | 75 ko  | ouverture de la carte  |
-| démo facet-filter (JS + CSS)    | 4,6 ko   | 10 ko  | ouverture du filtre    |
-| scène 3D (three + graphe)       | 138,4 ko | 230 ko | après le premier rendu |
+| Morceau                         | Mesure   | Budget | Quand                    |
+| ------------------------------- | -------- | ------ | ------------------------ |
+| initial (React, shell, catalog) | 60,5 ko  | 70 ko  | toujours                 |
+| CSS initial                     | 5,6 ko   | 12 ko  | toujours                 |
+| fontes préchargées              | 51,5 ko  | 60 ko  | toujours                 |
+| démo status-map (JS + CSS)      | 68,3 ko  | 75 ko  | ouverture de la carte    |
+| démo facet-filter (JS + CSS)    | 4,6 ko   | 10 ko  | ouverture du filtre      |
+| démo before-after (JS + CSS)    | 4,3 ko   | 10 ko  | ouverture du comparateur |
+| scène 3D (three + graphe)       | 138,4 ko | 230 ko | après le premier rendu   |
 
 Règle de dépendance, dans l'esprit du commit `ac46263` : **aucune dépendance
 d'exécution de plus de 10 ko gzip n'entre sans une ligne de justification dans
 le message de commit.**
+
+**Le coût initial croît avec le catalogue.** `before-after` a ajouté 2,5 ko :
+pas son code, qui est paresseux, mais la prose de son `meta.ts` — problème,
+décisions, API, extrait — que `catalog.ts` embarque dans le morceau initial
+alors que seule la page du composant s'en sert. Trois ou quatre composants de
+plus et le budget saute. Le jour venu, la parade est de scinder chaque `meta`
+en deux : ce que la carte d'accueil affiche, et ce que la page charge en même
+temps que sa démo.
 
 Par frame : moins de 60 appels de dessin en vue d'ensemble — il y en a quatre,
 six pendant un dépliage — DPR adaptatif de 1 à 1,75, pas d'ombres. Les images

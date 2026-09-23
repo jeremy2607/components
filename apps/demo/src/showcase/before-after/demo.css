@@ -1,0 +1,113 @@
+/* Feuille de la démo du comparateur. Les jetons viennent de la galerie. */
+
+.ba-demo {
+  display: flex;
+  height: 100%;
+  padding: 20px;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.ba-demo__barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ba-demo__onglets {
+  display: flex;
+  gap: 6px;
+}
+
+.ba-demo__onglet {
+  padding: 5px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.ba-demo__onglet:hover {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.ba-demo__onglet[aria-pressed='true'] {
+  border-color: var(--select-bg);
+  background: var(--select-bg);
+  color: var(--select-text);
+}
+
+.ba-demo__bascule {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ba-demo__bascule input {
+  accent-color: var(--select-bg);
+}
+
+/*
+ * Le comparateur reprend les jetons de la galerie. Le paquet n'impose aucune
+ * couleur : il ne connaît que des noms de variables.
+ */
+.ba-demo .ba {
+  --ba-bg: var(--surface-2);
+  --ba-focus: var(--focus);
+  --ba-handle: #fff;
+  --ba-grip-text: #102b47;
+  --ba-caption-bg: rgb(6 8 13 / 78%);
+  --ba-caption-text: #eaf0f7;
+  --ba-radius: 2px;
+
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.ba-demo__legende {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.ba-demo__aide,
+.ba-demo__notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.ba-demo__aide {
+  color: var(--muted);
+}
+
+.ba-demo__notice {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--notice-warning-bg);
+  color: var(--notice-warning-text);
+}
+
+/*
+ * Quand la place manque, la barre passe en colonne. La démo ne sait pas si
+ * elle est dans la page ou en plein écran : elle réagit à son conteneur.
+ */
+@container (max-width: 560px) {
+  .ba-demo__barre {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

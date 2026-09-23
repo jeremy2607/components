@@ -1,6 +1,7 @@
 // Extensions explicites : ce fichier et les `meta.ts` sont lus tels quels par
 // Node, dans les scripts de coloration et de pré-rendu, et Node ESM n'invente
 // pas d'extension. Les imports de type, eux, disparaissent au dépouillement.
+import { meta as beforeAfter } from './showcase/before-after/meta.ts';
 import { meta as facetFilter } from './showcase/facet-filter/meta.ts';
 import { meta as statusMap } from './showcase/status-map/meta.ts';
 import type { ComponentMeta } from './types.ts';
@@ -75,7 +76,7 @@ const PLANNED: readonly ComponentMeta[] = [
  * Données pures, sans import de composant : les scripts de build la lisent
  * directement avec Node.
  */
-export const catalog: readonly ComponentMeta[] = [statusMap, facetFilter, ...PLANNED];
+export const catalog: readonly ComponentMeta[] = [statusMap, facetFilter, beforeAfter, ...PLANNED];
 
 export function metaById(id: string): ComponentMeta | undefined {
   return catalog.find((entry) => entry.id === id);

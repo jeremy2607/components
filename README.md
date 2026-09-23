@@ -7,6 +7,7 @@ les met en scène.
 | --------------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
 | [`@jeremyprat/status-map`](packages/status-map)     | Carte Leaflet d'un parc de sites géolocalisés, regroupement coloré par sévérité | en cours |
 | [`@jeremyprat/facet-filter`](packages/facet-filter) | Filtre à facettes dont chaque valeur annonce ce qu'elle ferait apparaître       | en cours |
+| [`@jeremyprat/before-after`](packages/before-after) | Comparateur avant / après dont le séparateur est un vrai curseur                | en cours |
 
 ---
 
@@ -128,6 +129,27 @@ enfermé dans son propre filtre.
 Les comptes sont donc disjonctifs : pour chaque facette, on compte comme si elle
 seule n'était pas cochée. La démo permet de basculer sur la version fautive pour
 voir la différence en direct.
+
+---
+
+## before-after
+
+Un comparateur avant / après dont le séparateur est un vrai curseur.
+
+[Code du paquet](packages/before-after) · [Documentation](packages/before-after/README.md)
+
+Tout le monde sait l'écrire en une soirée, et presque toutes les versions
+écrites en une soirée partagent les deux mêmes défauts : un bloc qu'on traîne au
+`pointermove` n'existe pas pour qui navigue au clavier, et rogner la couche du
+dessus par sa largeur redimensionne l'image qu'elle contient — les deux côtés du
+trait ne sont alors plus à la même échelle, et la comparaison ment.
+
+Le séparateur est donc un `input[type=range]` transparent posé sur l'image : le
+pointeur, le clavier, le rôle et la valeur annoncée viennent du navigateur, et
+le composant n'écrit aucune gestion d'événement. Le rognage passe par
+`clip-path`. Vient de
+[prat-immobilier.fr](https://www.prat-immobilier.fr), où l'on montre une pièce
+livrée brute puis la même meublée numériquement.
 
 ---
 

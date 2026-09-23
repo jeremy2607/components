@@ -1,0 +1,158 @@
+/*
+ * Apparence par défaut, entièrement pilotable par variables. Aucune couleur
+ * n'est écrite en dur : les valeurs de repli servent à voir quelque chose dans
+ * une page vierge, pas à imposer un thème.
+ */
+
+.ba {
+  position: relative;
+  aspect-ratio: var(--ba-aspect, 1.5);
+  overflow: hidden;
+  border-radius: var(--ba-radius, 4px);
+  background: var(--ba-bg, #f3ede4);
+  cursor: ew-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ba__layer {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Les deux couches se cadrent exactement pareil. Un `object-fit` différent
+ * d'un côté et de l'autre décale les deux prises de vue de quelques pixels, et
+ * le sujet n'a plus l'air d'être le même.
+ */
+.ba__layer > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--ba-fit, cover);
+}
+
+/*
+ * On rogne, on ne redimensionne pas.
+ *
+ * `clip-path` cache une partie de la couche sans toucher à sa taille. Donner
+ * une largeur au conteneur redimensionnerait l'image qu'il contient : les deux
+ * côtés du trait ne seraient plus à la même échelle, et la comparaison
+ * mentirait.
+ */
+.ba__layer--after {
+  clip-path: inset(0 0 0 var(--ba-position, 50%));
+}
+
+.ba__caption {
+  position: absolute;
+  bottom: var(--ba-caption-offset, 16px);
+  z-index: 2;
+  padding: var(--ba-caption-padding, 5px 12px);
+  border-radius: var(--ba-caption-radius, 100px);
+  background: var(--ba-caption-bg, rgb(10 28 48 / 72%));
+  color: var(--ba-caption-text, #fff);
+  font-size: var(--ba-caption-size, 0.66rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.ba__caption--before {
+  left: var(--ba-caption-offset, 16px);
+}
+
+.ba__caption--after {
+  right: var(--ba-caption-offset, 16px);
+}
+
+.ba__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--ba-position, 50%);
+  z-index: 3;
+  width: 2px;
+  background: var(--ba-handle, #fff);
+  transform: translateX(-1px);
+  box-shadow: 0 0 0 1px rgb(10 28 48 / 18%);
+  /* Le repère est décoratif : c'est le champ en dessous qu'on manipule. */
+  pointer-events: none;
+}
+
+.ba__grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: var(--ba-grip-size, 44px);
+  height: var(--ba-grip-size, 44px);
+  border-radius: 50%;
+  background: var(--ba-handle, #fff);
+  color: var(--ba-grip-text, #102b47);
+  box-shadow: var(--ba-grip-shadow, 0 2px 10px rgb(10 28 48 / 25%));
+  transform: translate(-50%, -50%);
+}
+
+/*
+ * Le curseur natif, superposé et invisible.
+ *
+ * Il porte toute l'interaction : le pointeur, le clavier, le rôle et la valeur
+ * annoncée. Le repère visuel au-dessus n'est qu'un dessin.
+ */
+.ba__range {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  opacity: 0;
+  cursor: ew-resize;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Le glissement horizontal déplace le trait, le vertical fait défiler la
+     page : au doigt, on ne se retrouve jamais piégé dans l'image. */
+  touch-action: pan-y;
+}
+
+/*
+ * Un pouce étroit, et non les quarante-huit pixels du repère visible.
+ *
+ * Le navigateur convertit l'abscisse du pointeur en valeur sur la piste
+ * diminuée de la largeur du pouce : un gros pouce décale la conversion de sa
+ * moitié, et les toutes dernières valeurs deviennent inatteignables. Le repère
+ * dessiné, lui, reste large et facile à saisir.
+ */
+.ba__range::-webkit-slider-thumb {
+  width: 2px;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ba__range::-moz-range-thumb {
+  width: 2px;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+/*
+ * Le champ est transparent : son anneau de focus ne se verrait pas. On le
+ * reporte sur le repère, qui est ce que le visiteur regarde.
+ */
+.ba__range:focus-visible ~ .ba__handle .ba__grip {
+  outline: var(--ba-focus-width, 2px) solid var(--ba-focus, #b08d57);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ba,
+  .ba__layer--after,
+  .ba__handle {
+    transition: none;
+  }
+}
