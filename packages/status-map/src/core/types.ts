@@ -131,7 +131,7 @@ export interface MarkerConfig {
   size?: number;
 }
 
-/** Fond de carte raster, décrit par son gabarit d'URL. */
+/** Fond de carte. Injecté par le consommateur, jamais codé en dur. */
 export interface TileConfig {
   url: string;
   attribution: string;
@@ -139,34 +139,6 @@ export interface TileConfig {
   maxZoom?: number;
   minZoom?: number;
   className?: string;
-}
-
-/**
- * Fond de carte quelconque, construit par le consommateur.
- *
- * Toutes les cartes ne sont pas des tuiles raster : une couche vectorielle
- * MapLibre, une couche WMS ou un fond maison sont des couches Leaflet comme
- * les autres. Le paquet ne veut pas connaître leur forme, seulement pouvoir
- * les poser et les retirer.
- */
-export interface BasemapLayer {
-  /** Construit la couche. Appelée une fois par carte. */
-  create: () => L.Layer;
-  /**
-   * Zoom maximum de la carte.
-   *
-   * Requis : une couche quelconque ne le déclare pas forcément, et le
-   * regroupement refuse de démarrer sur un zoom maximum infini.
-   */
-  maxZoom: number;
-  minZoom?: number;
-}
-
-/** Fond de carte. Injecté par le consommateur, jamais codé en dur. */
-export type BasemapConfig = TileConfig | BasemapLayer;
-
-export function isBasemapLayer(config: BasemapConfig): config is BasemapLayer {
-  return typeof (config as BasemapLayer).create === 'function';
 }
 
 /** Cadrage initial et ses valeurs de repli. */

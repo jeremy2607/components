@@ -40,23 +40,15 @@ Vitest et Testing Library. Ce qu'on attend d'une contribution :
 jsdom ne met rien en page : une carte y mesure zéro. Les tests qui dépendent d'une taille
 utilisent l'aide `giveMapASize`.
 
-## Fond de carte
+## Variables d'environnement
 
-La démo affiche des tuiles vectorielles d'[OpenFreeMap](https://openfreemap.org) : données
-OpenStreetMap, schéma OpenMapTiles, **aucune clé et aucune inscription**. Un clone frais
-démarre et se déploie sans le moindre secret, et il n'y a pas de quota à surveiller.
+La démo lit `VITE_MAPTILER_KEY`. Sans clé, elle bascule sur les tuiles OpenStreetMap, donc
+un clone frais démarre et se déploie sans secret. Copier `apps/demo/.env.example` vers
+`apps/demo/.env` pour en fournir une.
 
-Le style se change sur une seule ligne dans `apps/demo/src/tiles.ts`.
-
-Deux détails d'intégration à connaître si vous y touchez :
-
-- MapLibre déduit l'URL de son worker de sa propre URL de module. Empaqueté dans le fichier
-  de l'application, ce raisonnement pointe dans le vide et la carte reste blanche. Le worker
-  est donc importé en `?worker&url`, ce qui le fait empaqueter avec ses dépendances, et son
-  URL est donnée à `setWorkerUrl`. Un simple `?url` ne suffit pas : il copie le fichier sans
-  suivre ses imports.
-- `worker: { format: 'es' }` est nécessaire dans la configuration Vite, parce que MapLibre
-  crée son worker en module.
+Une clé de tuiles est **publique par nature** : elle part dans le bundle du navigateur. La
+protection n'est pas de la cacher, c'est de la restreindre au domaine de la démo dans le
+tableau de bord du fournisseur.
 
 ## Déploiement statique
 

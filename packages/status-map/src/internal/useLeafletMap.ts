@@ -1,12 +1,11 @@
 import * as L from 'leaflet';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BasemapConfig, LatLngTuple } from '../core/types';
-import { isBasemapLayer } from '../core/types';
+import type { LatLngTuple, TileConfig } from '../core/types';
 import { definedOnly } from './options';
 import { useLatest } from './useLatest';
 
 export interface UseLeafletMapOptions {
-  tiles: BasemapConfig;
+  tiles: TileConfig;
   /** Vue posee à la création. Leaflet refuse toute couche sans centre ni zoom. */
   initialCenter: LatLngTuple;
   initialZoom: number;
@@ -59,19 +58,7 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
     if (!container) return;
 
     const { center, zoom, mapOptions } = creationRef.current;
-    const basemap = tilesRef.current;
-    const instance = L.map(
-      container,
-      definedOnly({
-        // Une couche quelconque ne déclare pas son zoom maximum à la carte :
-        // on le pose ici, sinon le regroupement refuse de démarrer.
-        maxZoom: isBasemapLayer(basemap) ? basemap.maxZoom : undefined,
-        minZoom: isBasemapLayer(basemap) ? basemap.minZoom : undefined,
-        ...mapOptions,
-        center: [center[0], center[1]] as L.LatLngTuple,
-        zoom,
-      }),
-    );
+    const instance = L.map(container, { ...mapOptions, center: [center[0], center[1]], zoom });
     mapRef.current = instance;
     setMap(instance);
 
@@ -80,39 +67,28 @@ export function useLeafletMap(options: UseLeafletMapOptions): UseLeafletMapResul
       instance.remove();
       setMap(null);
     };
-  }, [container, tilesRef]);
+  }, [container]);
 
   // Clé de valeur : le fond est recréé dès qu'un champ change, sans obliger
   // l'appelant à mémoriser l'objet `tiles`.
-  const basemap = options.tiles;
-  const tilesKey = isBasemapLayer(basemap)
-    ? `layer:${String(basemap.maxZoom)}:${String(basemap.minZoom ?? '')}`
-    : JSON.stringify([
-        basemap.url,
-        basemap.attribution,
-        basemap.subdomains,
-        basemap.maxZoom,
-        basemap.minZoom,
-        basemap.className,
-      ]);
+  const { url, attribution, subdomains, maxZoom, minZoom, className } = options.tiles;
+  const tilesKey = JSON.stringify([url, attribution, subdomains, maxZoom, minZoom, className]);
 
   useEffect(() => {
     const instance = mapRef.current;
     if (!instance) return;
 
     const tiles = tilesRef.current;
-    const layer = isBasemapLayer(tiles)
-      ? tiles.create()
-      : L.tileLayer(
-          tiles.url,
-          definedOnly<L.TileLayerOptions>({
-            attribution: tiles.attribution,
-            subdomains: tiles.subdomains ?? 'abc',
-            maxZoom: tiles.maxZoom,
-            minZoom: tiles.minZoom,
-            className: tiles.className,
-          }),
-        );
+    const layer = L.tileLayer(
+      tiles.url,
+      definedOnly<L.TileLayerOptions>({
+        attribution: tiles.attribution,
+        subdomains: tiles.subdomains ?? 'abc',
+        maxZoom: tiles.maxZoom,
+        minZoom: tiles.minZoom,
+        className: tiles.className,
+      }),
+    );
     layer.addTo(instance);
 
     return () => {

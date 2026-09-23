@@ -4,7 +4,6 @@ import { analyzeDataQuality } from './core/dataQuality';
 import { computeView, DEFAULT_ZOOM } from './core/view';
 import type {
   AnyStatusItem,
-  BasemapConfig,
   ClusterConfig,
   DataQualityReport,
   MarkerConfig,
@@ -14,6 +13,7 @@ import type {
   StatusItem,
   StatusMapLabels,
   StatusRegistry,
+  TileConfig,
   ViewConfig,
 } from './core/types';
 import { IconSprite } from './internal/IconSprite';
@@ -27,7 +27,7 @@ const DEFAULT_MARKER_SIZE = 36;
 export interface UseStatusMapOptions<T extends AnyStatusItem = StatusItem> {
   items: readonly T[];
   statuses: StatusRegistry<T['status']>;
-  tiles: BasemapConfig;
+  tiles: TileConfig;
   view: ViewConfig;
   /** Cadre sur les éléments géolocalisés à la première mesure du conteneur. Défaut : true. */
   fitOnLoad?: boolean;

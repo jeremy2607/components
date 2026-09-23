@@ -38,23 +38,6 @@ seule source de vérité pour la couleur d'un regroupement. `icon` est du conten
 dans une boîte de 24 par 24, rendu une seule fois par statut dans un sprite, puis instancié
 par référence sur chaque marqueur.
 
-## Le fond de carte
-
-`tiles` prend deux formes. Un gabarit d'URL, pour des tuiles raster :
-
-```tsx
-tiles={{ url: 'https://{s}.tile.example.org/{z}/{x}/{y}.png', attribution: '…' }}
-```
-
-Ou une fabrique de couche, pour tout le reste, y compris un fond vectoriel :
-
-```tsx
-tiles={{ create: () => maplibreGL({ style }), maxZoom: 19 }}
-```
-
-`maxZoom` est requis sous cette forme : une couche quelconque ne le déclare pas forcément à
-la carte, et le regroupement refuse de démarrer sur un zoom maximum infini.
-
 Les feuilles de Leaflet et du greffon restent à la charge de l'application : le paquet ne
 les importe pas à votre place. `MarkerCluster.css` ne contient que les transitions de
 regroupement ; `MarkerCluster.Default.css` n'est pas nécessaire, c'est l'apparence par
