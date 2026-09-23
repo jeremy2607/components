@@ -1,5 +1,4 @@
 import * as L from 'leaflet';
-import 'leaflet.markercluster';
 import { useEffect, useRef } from 'react';
 import type {
   AnyStatusItem,
@@ -10,6 +9,7 @@ import type {
 } from '../core/types';
 import { isLocated } from '../core/view';
 import { createClusterIcon } from './clusterIcon';
+import { resolveClusterFactory } from './clusterFactory';
 import { createStatusIcon } from './markerIcon';
 import { definedOnly } from './options';
 import { useLatest } from './useLatest';
@@ -80,7 +80,7 @@ export function useMarkerLayer<T extends AnyStatusItem>(options: UseMarkerLayerO
     const group =
       config.enabled === false
         ? L.layerGroup()
-        : L.markerClusterGroup(
+        : resolveClusterFactory()(
             definedOnly<L.MarkerClusterGroupOptions>({
               animate: true,
               maxClusterRadius: config.maxRadius ?? 80,
