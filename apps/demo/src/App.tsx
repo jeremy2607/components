@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { metaById } from './catalog';
 import { useFullscreen, useRoute } from './router';
+import { SceneHost } from './scene/SceneHost';
 import { ComponentPage } from './ui/ComponentPage';
 import { FullscreenDemo } from './ui/FullscreenDemo';
 import { Header } from './ui/Header';
@@ -33,6 +34,13 @@ export function App() {
   return (
     <>
       <Header />
+      {/*
+       * La scène vit au-dessus des pages, pas dedans : naviguer d'un composant
+       * à l'autre y fait plonger la caméra et déplier le noeud, au lieu de
+       * démonter puis remonter un canevas et de repartir de la vue d'ensemble.
+       * Le plein écran d'une démo, lui, sort tout le reste de l'écran.
+       */}
+      <SceneHost focus={playable && meta ? meta.id : null} />
       <main id="contenu">
         {route.name === 'home' && <Home />}
         {meta && playable && <ComponentPage meta={meta} />}

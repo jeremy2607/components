@@ -1,5 +1,6 @@
 import { catalog } from '../catalog';
 import { Link } from './Link';
+import { ViewToggle } from './ViewToggle';
 
 const live = catalog.filter((entry) => entry.status !== 'planned').length;
 const planned = catalog.length - live;
@@ -11,11 +12,14 @@ export function Header() {
         <Link href="/" className="font-display text-base tracking-tight text-text-1">
           components<span className="text-accent">.</span>
         </Link>
-        <p className="font-mono text-[11px] text-text-2">
-          {live} en ligne
-          <span aria-hidden="true"> · </span>
-          {planned} à venir
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="font-mono text-[11px] text-text-2">
+            {live} en ligne
+            <span aria-hidden="true"> · </span>
+            {planned} à venir
+          </p>
+          <ViewToggle />
+        </div>
       </div>
     </header>
   );

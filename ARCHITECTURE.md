@@ -89,14 +89,14 @@ n'en contient aucun.
 
 ```
 apps/demo/src/
-├─ tokens/tokens.css   la source unique des couleurs (Tailwind, démos, 3D à venir)
+├─ tokens/tokens.css   la source unique des couleurs (Tailwind, démos, 3D)
 ├─ catalog.ts          la liste centrale : données pures, lisibles par Node
-├─ tech.ts             le registre des technos, futurs noeuds partagés du graphe
+├─ tech.ts             le registre des technos, noeuds partagés du graphe
 ├─ registry.tsx        les démos, en import paresseux
 ├─ router.ts           routeur maison : deux motifs, aucune dépendance
 ├─ store/              zustand
 ├─ ui/                 l'interface 2D
-├─ scene/              la 3D (vide jusqu'à l'étape 3)
+├─ scene/              la 3D : graphe, layout au build, paliers, rendu
 ├─ data/               le parc fictif, partagé par les démos
 └─ showcase/<id>/      meta.ts, Demo.tsx, demo.css d'un composant
 ```
@@ -142,7 +142,7 @@ Puis, pour qu'il apparaisse dans la galerie :
 3. une entrée dans `catalog.ts`, une ligne dans `registry.tsx`.
 
 Les technos citées dans les couches doivent exister dans `tech.ts` : ce sont
-elles qui deviendront les noeuds partagés du graphe 3D.
+elles qui sont les noeuds partagés du graphe 3D.
 
 `apps/demo` consomme les paquets par leur `dist`, pas par leurs sources : une carte
 d'exports cassée casse le build de la galerie avant la publication.

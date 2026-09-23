@@ -18,7 +18,7 @@ veut savoir comment c'est fait.
 | ---------------------------------------------------------------- | ------- |
 | 1. Concept, direction artistique, architecture, budget de perf   | validée |
 | 2. Fondations : galerie 2D, jetons, registre, routage, pré-rendu | faite   |
-| 3. 3D : scène, graphe, strates, transitions, bascule 2D/3D       | à faire |
+| 3. 3D : scène, graphe, strates, transitions, bascule 2D/3D       | faite   |
 | 4. Composants : les suivants, un par un                          | à faire |
 | 5. Finitions : perf mesurée, a11y, responsive, SEO, déploiement  | à faire |
 
@@ -38,19 +38,34 @@ chaque étape : `pnpm check`, puis un commit.
   fil qui en sort** : la 3D démontre que le coeur est pur, sans qu'on lise une
   ligne de documentation.
 
-Décisions déjà prises pour l'étape 3 :
+Ce qui a été fait, et comment :
 
-- **Layout calculé au build**, graine fixe, coordonnées livrées en JSON. Zéro
-  simulation de forces à l'exécution, et des positions déterministes, sans quoi
-  un lien profond ne saurait pas où poser la caméra.
+- **Layout calculé au build**, graine fixe, coordonnées livrées en JSON par le
+  greffon `virtual:layout`, jumeau de `virtual:snippets`. Zéro simulation de
+  forces à l'exécution, et des positions déterministes, sans quoi un lien
+  profond ne saurait pas où poser la caméra. Module virtuel plutôt que fichier
+  commité : il ne peut pas se désynchroniser du catalogue.
 - Un `InstancedMesh` pour tous les noeuds, un `LineSegments` pour toutes les
-  arêtes : deux appels de dessin pour tout le graphe.
-- `frameloop="demand"` dès que le panneau de détail est ouvert : pendant qu'on
-  lit du code ou qu'on manipule la carte, la scène ne rend rien.
-- Pas d'ombres temps réel. `postprocessing` seulement au palier haut, après
-  mesure ; halos en sprites additifs sinon.
+  arêtes : deux appels de dessin pour tout le graphe, plus deux nuages de
+  points additifs (halos, poussière) et deux objets pendant un dépliage.
+- **three.js piloté à la main, sans `@react-three/fiber`.** La décision a
+  changé en cours d'étape, pour trois raisons : R3F 9 exige React 19, donc une
+  montée de version de tout le dépôt hors sujet ici ; R3F 8 est figé sur React
+  18 ; et un réconciliateur n'avait rien à réconcilier, la scène ne changeant
+  jamais de forme, seulement de couleurs et de matrices. Le rendu à la demande
+  promis par `frameloop="demand"` est écrit à la main : la boucle s'éteint
+  quand la caméra est arrivée, et un `IntersectionObserver` l'arrête dès que le
+  canevas sort du cadre — donc pendant qu'on lit du code sur une page.
+- Pas d'ombres temps réel, et pas de `postprocessing` : non mesuré, et les
+  halos en points additifs suffisent au rendu « phosphore ».
+- Désignation des noeuds en espace écran, pas au lancer de rayon : la même
+  cible à toutes les distances, au doigt comme à la souris, et le `Raycaster`
+  hors du paquet.
 - Quatre paliers : haut, moyen, mobile, 2D. Le mode 2D s'impose sans WebGL,
   avec `prefers-reduced-motion`, ou sur perte de contexte.
+- La scène est masquée aux technologies d'assistance : la grille sous le
+  canevas reste la vraie liste des composants, dans le DOM, au clavier et pour
+  les robots.
 
 ## Direction artistique : encre et phosphore
 
@@ -61,7 +76,7 @@ grande, pas des effets.
 Les couleurs vivent **uniquement** dans `apps/demo/src/tokens/tokens.css`.
 Tailwind les lit via `@theme`, les feuilles des démos via les noms de rôle
 (`--bg`, `--surface`, `--text`, `--muted`, `--border`, `--select-*`, `--focus`),
-et la scène 3D les lira au démarrage plutôt que de les redéclarer.
+et la scène 3D les lit au démarrage plutôt que de les redéclarer.
 
 | Rôle    | Valeur                                  |
 | ------- | --------------------------------------- |
@@ -94,7 +109,7 @@ apps/demo/               LA galerie, seule application du dépôt
   src/router.ts          routeur maison, deux motifs
   src/store/             zustand
   src/ui/                l'interface 2D
-  src/scene/             la 3D (étape 3)
+  src/scene/             la 3D : graphe, layout, paliers, caméra, rendu
   src/data/              le parc fictif, partagé par les démos
   src/showcase/<id>/     meta.ts + Demo.tsx + demo.css d'un composant
   scripts/prerender.ts   un vrai fichier HTML par composant, après le build
@@ -127,21 +142,22 @@ Règles qui tiennent l'ensemble :
 
 Mesuré au dernier build, en gzip :
 
-| Morceau                         | Mesure  | Budget | Quand                  |
-| ------------------------------- | ------- | ------ | ---------------------- |
-| initial (React, shell, catalog) | 57,2 ko | 70 ko  | toujours               |
-| CSS initial                     | 5,1 ko  | 12 ko  | toujours               |
-| fontes préchargées              | 51,5 ko | 60 ko  | toujours               |
-| démo status-map (JS + CSS)      | 68,3 ko | 75 ko  | ouverture de la carte  |
-| démo facet-filter (JS + CSS)    | 4,6 ko  | 10 ko  | ouverture du filtre    |
-| scène 3D (étape 3)              | —       | 230 ko | après le premier rendu |
+| Morceau                         | Mesure   | Budget | Quand                  |
+| ------------------------------- | -------- | ------ | ---------------------- |
+| initial (React, shell, catalog) | 57,9 ko  | 70 ko  | toujours               |
+| CSS initial                     | 5,6 ko   | 12 ko  | toujours               |
+| fontes préchargées              | 51,5 ko  | 60 ko  | toujours               |
+| démo status-map (JS + CSS)      | 68,3 ko  | 75 ko  | ouverture de la carte  |
+| démo facet-filter (JS + CSS)    | 4,6 ko   | 10 ko  | ouverture du filtre    |
+| scène 3D (three + graphe)       | 138,4 ko | 230 ko | après le premier rendu |
 
 Règle de dépendance, dans l'esprit du commit `ac46263` : **aucune dépendance
 d'exécution de plus de 10 ko gzip n'entre sans une ligne de justification dans
 le message de commit.**
 
-Par frame, quand la 3D arrivera : 60 fps sur un MacBook Air, moins de 60 appels
-de dessin en vue d'ensemble, DPR adaptatif de 1 à 1,75, pas d'ombres.
+Par frame : moins de 60 appels de dessin en vue d'ensemble — il y en a quatre,
+six pendant un dépliage — DPR adaptatif de 1 à 1,75, pas d'ombres. Les images
+par seconde restent à mesurer sur une vraie machine, à l'étape 5.
 
 ## Conventions de code
 
