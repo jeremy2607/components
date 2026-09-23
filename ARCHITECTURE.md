@@ -82,6 +82,46 @@ Trois points à respecter :
 Le CSS suit tout seul : la classe produite est `sm-marker--maintenance`, et la couleur passe
 par une variable posée sur l'élément. Rien à ajouter dans la feuille du paquet.
 
+## La galerie
+
+`apps/demo` est la seule application du dépôt. Elle présente les composants ; elle
+n'en contient aucun.
+
+```
+apps/demo/src/
+├─ tokens/tokens.css   la source unique des couleurs (Tailwind, démos, 3D à venir)
+├─ catalog.ts          la liste centrale : données pures, lisibles par Node
+├─ tech.ts             le registre des technos, futurs noeuds partagés du graphe
+├─ registry.tsx        les démos, en import paresseux
+├─ router.ts           routeur maison : deux motifs, aucune dépendance
+├─ store/              zustand
+├─ ui/                 l'interface 2D
+├─ scene/              la 3D (vide jusqu'à l'étape 3)
+├─ data/               le parc fictif, partagé par les démos
+└─ showcase/<id>/      meta.ts, Demo.tsx, demo.css d'un composant
+```
+
+Quatre décisions portent le reste :
+
+**Le catalogue est lisible sans empaqueteur.** `catalog.ts` et les `meta.ts` ne
+contiennent que des données et des imports de type, avec des extensions `.ts`
+explicites sur les imports de valeur. Node les lit tels quels, ce dont les
+scripts de build ont besoin : la coloration Shiki dans un greffon Vite, et le
+pré-rendu après le build. Aucune information n'est décrite deux fois.
+
+**Le composant actif est dans l'URL, pas dans le store.** Le plein écran d'une
+démo aussi. Ce qui se partage et se retrouve au bouton retour appartient à
+l'URL ; le store ne garde que ce qui n'a pas de sens ailleurs.
+
+**Une démo, deux contenants.** `Demo.tsx` ne sait pas s'il est rendu dans le
+cadre de la page ou en plein écran. Ce qui doit céder quand la place manque le
+fait par requête de conteneur, pas par requête de média.
+
+**Le HTML est écrit une fois, à la fin.** `scripts/prerender.ts` produit un
+`index.html` par composant, avec son titre, sa description et ses balises Open
+Graph. Sur un hébergement statique, `/components/status-map/` est alors un
+dossier qui existe : pas de réécriture, pas de 404 au rechargement.
+
 ## Ajouter un composant à la bibliothèque
 
 Le dépôt est un espace de travail pnpm. Un nouveau composant est un dossier sous
@@ -93,5 +133,16 @@ Le dépôt est un espace de travail pnpm. Un nouveau composant est un dossier so
 - aucune chaîne de texte visible dans le paquet : tout passe par des props ;
 - la logique décidable extraite dans un dossier `core/` pur.
 
+Puis, pour qu'il apparaisse dans la galerie :
+
+1. `apps/demo/src/showcase/<id>/meta.ts` : le problème, les décisions, les
+   couches, les props, l'extrait de code ;
+2. `apps/demo/src/showcase/<id>/Demo.tsx` : la démo, qui importe ses propres
+   feuilles de style pour qu'elles partent dans son morceau paresseux ;
+3. une entrée dans `catalog.ts`, une ligne dans `registry.tsx`.
+
+Les technos citées dans les couches doivent exister dans `tech.ts` : ce sont
+elles qui deviendront les noeuds partagés du graphe 3D.
+
 `apps/demo` consomme les paquets par leur `dist`, pas par leurs sources : une carte
-d'exports cassée casse le build de la démo avant la publication.
+d'exports cassée casse le build de la galerie avant la publication.

@@ -1,10 +1,27 @@
 # components
 
-Bibliothèque de composants React, publiables indépendamment.
+Bibliothèque de composants React publiables indépendamment, et la galerie qui
+les met en scène.
 
-| Paquet                                          | Description                                                                     | État     |
-| ----------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
-| [`@jeremyprat/status-map`](packages/status-map) | Carte Leaflet d'un parc de sites géolocalisés, regroupement coloré par sévérité | en cours |
+| Paquet                                              | Description                                                                     | État     |
+| --------------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
+| [`@jeremyprat/status-map`](packages/status-map)     | Carte Leaflet d'un parc de sites géolocalisés, regroupement coloré par sévérité | en cours |
+| [`@jeremyprat/facet-filter`](packages/facet-filter) | Filtre à facettes dont chaque valeur annonce ce qu'elle ferait apparaître       | en cours |
+
+---
+
+## La galerie
+
+[`apps/demo`](apps/demo) est la seule application du dépôt. Elle présente chaque
+composant avec sa démo live (le vrai composant, pas une capture), sa pile, son
+API, son code copiable et les décisions qui l'ont façonné.
+
+Chaque composant a son URL, `/components/<id>/`, qui est un vrai fichier HTML
+pré-rendu : titre, description et balises Open Graph justes sans exécuter une
+ligne de JavaScript. Une démo s'ouvre en plein écran par `?demo=plein`.
+
+La navigation 3D entre composants est le chantier suivant. Le concept retenu, la
+direction artistique et le budget de performance sont dans [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -12,7 +29,7 @@ Bibliothèque de composants React, publiables indépendamment.
 
 Une carte qui fait comprendre en deux secondes lesquels de vos sites vont mal.
 
-**Démo en ligne : _(à remplir au déploiement)_** · [Code du paquet](packages/status-map) · [Code de la démo](apps/demo)
+**Démo en ligne : _(à remplir au déploiement)_** · [Code du paquet](packages/status-map) · [Démo](apps/demo/src/showcase/status-map)
 
 <!--
   Capture animée à enregistrer puis déposer dans docs/demo.gif, et référencer ici :
@@ -97,6 +114,23 @@ de carte et ne dessine pas d'icônes à votre place. Tout ce qui est visible vie
 
 ---
 
+## facet-filter
+
+Un filtre à facettes dont chaque valeur annonce ce qu'elle ferait apparaître.
+
+[Code du paquet](packages/facet-filter) · [Documentation](packages/facet-filter/README.md)
+
+Le piège est toujours le même : compter les résultats **après** filtrage. Toutes
+les valeurs non cochées de la facette en cours tombent alors à zéro,
+l'utilisateur ne peut plus élargir sans d'abord décocher, et il se retrouve
+enfermé dans son propre filtre.
+
+Les comptes sont donc disjonctifs : pour chaque facette, on compte comme si elle
+seule n'était pas cochée. La démo permet de basculer sur la version fautive pour
+voir la différence en direct.
+
+---
+
 ## Développement
 
 ```bash
@@ -105,10 +139,11 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm check` enchaîne format, lint, types, tests et builds. C'est ce qui doit passer avant
-chaque commit.
+`pnpm check` enchaîne format, lint, types, tests et builds. C'est ce qui doit
+passer avant chaque commit.
 
-Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour les couches et l'ajout d'un statut, et
+Voir [CLAUDE.md](CLAUDE.md) pour le contexte du projet et la direction
+artistique, [ARCHITECTURE.md](ARCHITECTURE.md) pour les couches, et
 [CONTRIBUTING.md](CONTRIBUTING.md) pour l'outillage et le déploiement.
 
 ## Licence
