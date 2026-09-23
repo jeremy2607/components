@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { StatusDefinition } from '@jeremyprat/status-map';
-import { formatRelativeTime } from '../formatRelativeTime';
-import type { Site } from '../data/types';
+import { formatRelativeTime } from '../../../data/formatRelativeTime';
+import type { Site } from '../../../data/types';
 
 interface SiteListItemProps {
   site: Site;

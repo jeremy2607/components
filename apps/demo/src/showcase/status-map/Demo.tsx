@@ -1,37 +1,36 @@
 import { useMemo, useState } from 'react';
+import { useFacetFilter } from '@jeremyprat/facet-filter';
 import {
   StatusMap,
   type ClusterConfig,
   type DataQualityReport,
   type ViewConfig,
 } from '@jeremyprat/status-map';
-import { DataQualityNotice } from './components/DataQualityNotice';
-import { SimulationControls } from './components/SimulationControls';
-import { SitePanel } from './components/SitePanel';
-import { SitePopup } from './components/SitePopup';
-import { ThemeSwitch } from './components/ThemeSwitch';
-import { generateSites } from './data/generateSites';
-import type { Site, SiteStatus, SiteTag } from './data/types';
-import {
-  EMPTY_FILTERS,
-  countsForToggles,
-  filterSites,
-  isFiltered,
-  toggle,
-  type SiteFilters,
-} from './filters';
-import { statuses } from './statuses';
+import 'leaflet/dist/leaflet.css';
+// Animations de regroupement. MarkerCluster.Default.css n'est pas importé :
+// c'est l'apparence par défaut du greffon, que status-map remplace.
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import '@jeremyprat/status-map/styles.css';
+import './demo.css';
+import { SITE_FACETS, STATUS_FACET, TAGS_FACET, searchPredicate } from '../../data/filters';
+import { generateSites } from '../../data/generateSites';
+import { statuses } from '../../data/statuses';
+import type { Site } from '../../data/types';
+import { DataQualityNotice } from './parts/DataQualityNotice';
+import { SimulationControls } from './parts/SimulationControls';
+import { SitePanel } from './parts/SitePanel';
+import { SitePopup } from './parts/SitePopup';
 import { tiles } from './tiles';
 import { useActivitySimulator } from './useActivitySimulator';
-import { useLoadingDelay } from './useSiteLoader';
-import { useTheme } from './useTheme';
 import { useDismissible } from './useDismissible';
+import { useLoadingDelay } from './useSiteLoader';
+import { guardWheelZoom } from './wheelGuard';
 
 const view: ViewConfig = { defaultCenter: [46.6, 2.4], defaultZoom: 6 };
 
 const cluster: ClusterConfig = {
   maxRadius: 80,
-  spiderLegPolylineOptions: { weight: 2, color: '#5e6c84', opacity: 0.35 },
+  spiderLegPolylineOptions: { weight: 2, color: '#7f8ea6', opacity: 0.35 },
 };
 
 const LOCALE = 'fr-FR';
@@ -40,19 +39,33 @@ const LOCALE = 'fr-FR';
 const parc = generateSites();
 const EMPTY_PARC: readonly Site[] = [];
 
-export function App() {
+export function StatusMapDemo() {
   const [report, setReport] = useState<DataQualityReport | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<SiteFilters>(EMPTY_FILTERS);
+  const [search, setSearch] = useState('');
   const { dismissed, dismiss } = useDismissible('data-quality');
   const simulation = useActivitySimulator(parc);
-  const theme = useTheme();
   const loading = useLoadingDelay(600);
 
   const sites = loading ? EMPTY_PARC : simulation.sites;
-  const visible = useMemo(() => filterSites(sites, filters), [sites, filters]);
-  const counts = useMemo(() => countsForToggles(sites, filters), [sites, filters]);
-  const filtered = isFiltered(filters);
+
+  // Mémoïsé : c'est une dépendance du filtrage et des comptes.
+  const match = useMemo(() => searchPredicate(search), [search]);
+  const {
+    items: visible,
+    counts,
+    selection,
+    filtered,
+    toggle,
+    clear,
+  } = useFacetFilter({ items: sites, facets: SITE_FACETS, match });
+
+  // Le paquet ne connaît que les facettes : la recherche se compte ici.
+  const narrowed = filtered || match !== undefined;
+  const reset = () => {
+    clear();
+    setSearch('');
+  };
 
   // La sélection est un identifiant, pas un instantané : un statut qui bascule
   // ne doit pas laisser une copie périmée dans l'en-tête.
@@ -63,38 +76,29 @@ export function App() {
 
   return (
     <div className="app">
-      <header className="app__header">
-        <div>
-          <h1 className="app__title">status-map</h1>
-          <p className="app__tagline">
-            Carte de supervision d'un parc de sites, clustering coloré par sévérité.
+      <div className="app__toolbar">
+        <SimulationControls
+          running={simulation.running}
+          changed={simulation.changed}
+          disabled={loading}
+          onToggle={simulation.toggle}
+          onReset={simulation.reset}
+        />
+        {selected && (
+          <p className="app__selection">
+            <span className="app__selection-name">{selected.data.name}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedId(null);
+              }}
+            >
+              Désélectionner
+            </button>
           </p>
-        </div>
-        <div className="app__aside">
-          <ThemeSwitch mode={theme.mode} onChange={theme.setMode} />
-          <SimulationControls
-            running={simulation.running}
-            changed={simulation.changed}
-            disabled={loading}
-            onToggle={simulation.toggle}
-            onReset={simulation.reset}
-          />
-          {selected && (
-            <p className="app__selection">
-              <span className="app__selection-name">{selected.data.name}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedId(null);
-                }}
-              >
-                Désélectionner
-              </button>
-            </p>
-          )}
-          <p className="app__count">{parc.length} sites</p>
-        </div>
-      </header>
+        )}
+        <p className="app__count">{parc.length} sites</p>
+      </div>
 
       {report && !dismissed && <DataQualityNotice report={report} onDismiss={dismiss} />}
 
@@ -115,6 +119,7 @@ export function App() {
             selectedId={selectedId}
             onSelect={select}
             onDataQuality={setReport}
+            onReady={guardWheelZoom}
             renderPopup={(site, context) => (
               <SitePopup site={site} context={context} onOpenDetails={select} />
             )}
@@ -130,24 +135,18 @@ export function App() {
           sites={visible}
           total={parc.length}
           statuses={statuses}
+          statusFacet={STATUS_FACET}
+          tagsFacet={TAGS_FACET}
           counts={counts}
-          filters={filters}
-          filtered={filtered}
+          selection={selection}
+          search={search}
+          narrowed={narrowed}
           selectedId={selectedId}
           locale={LOCALE}
           loading={loading}
-          onSearch={(search) => {
-            setFilters((current) => ({ ...current, search }));
-          }}
-          onToggleStatus={(status: SiteStatus) => {
-            setFilters((current) => ({ ...current, statuses: toggle(current.statuses, status) }));
-          }}
-          onToggleTag={(tag: SiteTag) => {
-            setFilters((current) => ({ ...current, tags: toggle(current.tags, tag) }));
-          }}
-          onReset={() => {
-            setFilters(EMPTY_FILTERS);
-          }}
+          onSearch={setSearch}
+          onToggle={toggle}
+          onReset={reset}
           onSelect={select}
         />
       </div>

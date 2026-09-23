@@ -1,17 +1,6 @@
-import type { Site, SiteStatus, SiteTag } from './data/types';
-
-export interface SiteFilters {
-  search: string;
-  /** Vide signifie « tous les statuts », pas « aucun ». */
-  statuses: ReadonlySet<SiteStatus>;
-  tags: ReadonlySet<SiteTag>;
-}
-
-export const EMPTY_FILTERS: SiteFilters = {
-  search: '',
-  statuses: new Set(),
-  tags: new Set(),
-};
+import { applyFacets, type Facet, type FacetSelection } from '@jeremyprat/facet-filter';
+import { statuses } from './statuses';
+import { SITE_STATUSES, SITE_TAGS, type Site, type SiteStatus } from './types';
 
 /** Recherche insensible aux accents : « roseliere » doit trouver « Roselière ». */
 function normalize(value: string): string {
@@ -21,23 +10,43 @@ function normalize(value: string): string {
     .toLowerCase();
 }
 
-export function isFiltered(filters: SiteFilters): boolean {
-  return filters.search.trim() !== '' || filters.statuses.size > 0 || filters.tags.size > 0;
+/**
+ * Prédicat de recherche, ou rien.
+ *
+ * Rendre `undefined` plutôt qu'un prédicat toujours vrai évite un appel de
+ * fonction par élément et par facette quand le champ est vide, c'est-à-dire
+ * la plupart du temps.
+ */
+export function searchPredicate(query: string): ((site: Site) => boolean) | undefined {
+  const needle = normalize(query.trim());
+  if (needle === '') return undefined;
+
+  return (site) =>
+    normalize(site.data.name).includes(needle) || normalize(site.data.model).includes(needle);
 }
 
-export function filterSites(sites: readonly Site[], filters: SiteFilters): Site[] {
-  const needle = normalize(filters.search.trim());
+/**
+ * Les deux axes de filtrage du parc.
+ *
+ * Les libellés viennent du registre de statuts : une seule source pour la
+ * couleur, le glyphe et le mot.
+ */
+export const STATUS_FACET: Facet<Site> = {
+  id: 'status',
+  label: 'Statut',
+  values: SITE_STATUSES,
+  valuesOf: (site) => site.status,
+  labelFor: (value) => statuses[value as SiteStatus].label ?? value,
+};
 
-  return sites.filter((site) => {
-    if (filters.statuses.size > 0 && !filters.statuses.has(site.status)) return false;
-    if (filters.tags.size > 0 && !site.data.tags.some((tag) => filters.tags.has(tag))) return false;
-    if (needle === '') return true;
+export const TAGS_FACET: Facet<Site> = {
+  id: 'tags',
+  label: 'Étiquettes',
+  values: SITE_TAGS,
+  valuesOf: (site) => site.data.tags,
+};
 
-    return (
-      normalize(site.data.name).includes(needle) || normalize(site.data.model).includes(needle)
-    );
-  });
-}
+export const SITE_FACETS: readonly Facet<Site>[] = [STATUS_FACET, TAGS_FACET];
 
 export type StatusCounts = Readonly<Record<SiteStatus, number>>;
 
@@ -47,18 +56,7 @@ export function countByStatus(sites: readonly Site[]): StatusCounts {
   return counts;
 }
 
-/**
- * Compte affiché par les compteurs de statut.
- *
- * Les autres filtres s'appliquent, mais pas celui des statuts : un compteur
- * doit annoncer ce qu'il ferait apparaître, pas ce qui est déjà affiché.
- */
-export function countsForToggles(sites: readonly Site[], filters: SiteFilters): StatusCounts {
-  return countByStatus(filterSites(sites, { ...filters, statuses: new Set() }));
-}
-
-export function toggle<T>(set: ReadonlySet<T>, value: T): Set<T> {
-  const next = new Set(set);
-  if (!next.delete(value)) next.add(value);
-  return next;
+/** Raccourci hors React, pour les tests et les scripts. */
+export function filterSites(sites: readonly Site[], selection: FacetSelection, query = ''): Site[] {
+  return applyFacets(sites, SITE_FACETS, selection, searchPredicate(query));
 }

@@ -1,6 +1,6 @@
 import type { PopupContext } from '@jeremyprat/status-map';
-import { formatRelativeTime } from '../formatRelativeTime';
-import type { Site, SiteStatus } from '../data/types';
+import { formatRelativeTime } from '../../../data/formatRelativeTime';
+import type { Site, SiteStatus } from '../../../data/types';
 
 interface SitePopupProps {
   site: Site;

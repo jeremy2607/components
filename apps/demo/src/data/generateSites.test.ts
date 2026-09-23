@@ -1,8 +1,8 @@
 import { analyzeDataQuality, isLocated } from '@jeremyprat/status-map';
 import { describe, expect, it } from 'vitest';
-import { ANCHORS } from '../anchors';
-import { generateSites } from '../generateSites';
-import { SITE_TAGS } from '../types';
+import { ANCHORS } from './anchors';
+import { generateSites } from './generateSites';
+import { SITE_TAGS } from './types';
 
 const NOW = new Date('2026-09-22T12:00:00.000Z');
 

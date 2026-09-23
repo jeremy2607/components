@@ -7,3 +7,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Extraits de code colorés au build par le greffon `virtual:snippets`. */
+declare module 'virtual:snippets' {
+  const snippets: Readonly<Record<string, string>>;
+  export default snippets;
+}

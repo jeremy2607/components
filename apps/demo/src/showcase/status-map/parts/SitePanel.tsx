@@ -1,26 +1,32 @@
 import { useId } from 'react';
+import {
+  FacetChips,
+  type Facet,
+  type FacetCounts,
+  type FacetSelection,
+} from '@jeremyprat/facet-filter';
 import type { StatusRegistry } from '@jeremyprat/status-map';
-import type { Site, SiteStatus, SiteTag } from '../data/types';
-import type { SiteFilters, StatusCounts } from '../filters';
+import type { Site, SiteStatus } from '../../../data/types';
 import { Legend } from './Legend';
 import { PanelSkeleton } from './PanelSkeleton';
 import { SiteListItem } from './SiteListItem';
 import { StatusCounters } from './StatusCounters';
-import { TagFilter } from './TagFilter';
 
 interface SitePanelProps {
   sites: readonly Site[];
   total: number;
   statuses: StatusRegistry<SiteStatus>;
-  counts: StatusCounts;
-  filters: SiteFilters;
-  filtered: boolean;
+  statusFacet: Facet<Site>;
+  tagsFacet: Facet<Site>;
+  counts: FacetCounts;
+  selection: FacetSelection;
+  search: string;
+  narrowed: boolean;
   selectedId: string | null;
   locale: string;
   loading: boolean;
   onSearch: (search: string) => void;
-  onToggleStatus: (status: SiteStatus) => void;
-  onToggleTag: (tag: SiteTag) => void;
+  onToggle: (facetId: string, value: string) => void;
   onReset: () => void;
   onSelect: (site: Site) => void;
 }
@@ -29,15 +35,17 @@ export function SitePanel({
   sites,
   total,
   statuses,
+  statusFacet,
+  tagsFacet,
   counts,
-  filters,
-  filtered,
+  selection,
+  search,
+  narrowed,
   selectedId,
   locale,
   loading,
   onSearch,
-  onToggleStatus,
-  onToggleTag,
+  onToggle,
   onReset,
   onSelect,
 }: SitePanelProps) {
@@ -54,7 +62,7 @@ export function SitePanel({
             id={searchId}
             className="field__input"
             type="search"
-            value={filters.search}
+            value={search}
             placeholder="Nom ou modèle"
             onChange={(event) => {
               onSearch(event.target.value);
@@ -63,20 +71,21 @@ export function SitePanel({
         </div>
 
         <StatusCounters
+          facet={statusFacet}
           statuses={statuses}
           counts={counts}
-          active={filters.statuses}
-          onToggle={onToggleStatus}
+          selection={selection}
+          onToggle={onToggle}
         />
 
-        <TagFilter active={filters.tags} onToggle={onToggleTag} />
+        <FacetChips facet={tagsFacet} counts={counts} selection={selection} onToggle={onToggle} />
       </div>
 
       <div className="panel__summary">
         <p className="panel__count">
           {loading ? 'Chargement du parc' : `${sites.length} sur ${total}`}
         </p>
-        {filtered && !loading && (
+        {narrowed && !loading && (
           <button type="button" className="panel__reset" onClick={onReset}>
             Tout effacer
           </button>
@@ -94,19 +103,16 @@ export function SitePanel({
         </p>
       ) : (
         <ul className="panel__list">
-          {sites.map((site) => {
-            const definition = statuses[site.status];
-            return (
-              <SiteListItem
-                key={site.id}
-                site={site}
-                definition={definition}
-                selected={site.id === selectedId}
-                locale={locale}
-                onSelect={onSelect}
-              />
-            );
-          })}
+          {sites.map((site) => (
+            <SiteListItem
+              key={site.id}
+              site={site}
+              definition={statuses[site.status]}
+              selected={site.id === selectedId}
+              locale={locale}
+              onSelect={onSelect}
+            />
+          ))}
         </ul>
       )}
 

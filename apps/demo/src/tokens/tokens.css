@@ -1,0 +1,135 @@
+@import 'tailwindcss';
+
+/*
+ * Encre et phosphore.
+ *
+ * Source unique des couleurs : Tailwind lit ce bloc, le CSS de la démo lit les
+ * mêmes variables plus bas, et la scène 3D les lira au démarrage plutôt que de
+ * les redéclarer en JavaScript. Une couleur n'est écrite qu'ici.
+ */
+@theme {
+  --color-ink-0: #06080d;
+  --color-ink-1: #0b0f16;
+  --color-ink-2: #121823;
+  --color-line: #1c2432;
+  --color-line-soft: #141b26;
+  --color-text-1: #eaf0f7;
+  --color-text-2: #9aa9bd;
+  --color-accent: #3df5c5;
+  --color-accent-dim: #1fb894;
+
+  --font-display: 'Clash Display', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Switzer', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+}
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/clash-display-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/switzer-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/switzer-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * Les noms courts que consomment les feuilles des démos et les paquets. Ils
+ * pointent vers les jetons ci-dessus : une démo n'a pas à connaître la palette,
+ * seulement les rôles.
+ */
+:root {
+  --bg: var(--color-ink-0);
+  --surface: var(--color-ink-1);
+  --surface-2: var(--color-ink-2);
+  --text: var(--color-text-1);
+  --muted: var(--color-text-2);
+  --border: var(--color-line);
+  --focus: var(--color-accent);
+  --select-bg: var(--color-accent);
+  --select-text: var(--color-ink-0);
+  --select-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
+
+  --notice-warning-bg: #3a2c12;
+  --notice-warning-text: #f2c879;
+  --notice-error-bg: #3b1a1f;
+  --notice-error-text: #ff9aa5;
+
+  --sm-map-bg: #0b0f16;
+  --sm-font: inherit;
+  --sm-attribution-bg: rgb(6 8 13 / 82%);
+  --sm-attribution-text: #7f8ea6;
+  --sm-popup-bg: #121823;
+  --sm-popup-text: #eaf0f7;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Un seul anneau de focus pour toute l'application, y compris dans les
+   * démos : c'est la couleur d'accent, elle ne sert qu'à ça et à l'état actif.
+   */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

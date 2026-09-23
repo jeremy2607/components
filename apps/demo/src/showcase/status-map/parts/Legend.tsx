@@ -1,5 +1,5 @@
 import type { StatusRegistry } from '@jeremyprat/status-map';
-import type { SiteStatus } from '../data/types';
+import type { SiteStatus } from '../../../data/types';
 
 interface LegendProps {
   statuses: StatusRegistry<SiteStatus>;

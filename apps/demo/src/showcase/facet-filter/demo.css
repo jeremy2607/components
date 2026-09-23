@@ -1,0 +1,167 @@
+/* Feuille de la démo du filtre. Les jetons viennent de la galerie. */
+
+.ffd {
+  display: grid;
+  height: 100%;
+  gap: 0;
+  grid-template-columns: 260px 1fr;
+  overflow: hidden;
+}
+
+.ffd__controls {
+  display: flex;
+  padding: 16px;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ffd__label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ffd__input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+
+.ffd .ff-chip {
+  --ff-border: var(--border);
+  --ff-border-hover: var(--muted);
+  --ff-chip-text: var(--muted);
+  --ff-selected-border: var(--select-bg);
+  --ff-selected-bg: var(--select-bg);
+  --ff-selected-text: var(--select-text);
+  --ff-focus: var(--focus);
+}
+
+.ffd .ff-group__legend {
+  color: var(--muted);
+}
+
+.ffd__switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ffd__switch input {
+  margin: 2px 0 0;
+  accent-color: var(--select-bg);
+}
+
+.ffd__switch em {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.ffd__results {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.ffd__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ffd__summary strong {
+  color: var(--text);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ffd__reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.ffd__list {
+  display: flex;
+  margin: 0;
+  padding: 6px;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.ffd__item {
+  display: grid;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 7px 10px;
+  grid-template-columns: 9px 1fr;
+}
+
+.ffd__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  grid-row: span 2;
+}
+
+.ffd__name {
+  font-size: 13px;
+}
+
+.ffd__meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ffd__more {
+  margin: 0;
+  padding: 10px 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .ffd {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .ffd__controls {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ffd__switch {
+    margin-top: 0;
+  }
+}

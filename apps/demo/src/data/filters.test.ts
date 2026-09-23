@@ -1,13 +1,7 @@
+import { EMPTY_SELECTION, facetCounts, type FacetSelection } from '@jeremyprat/facet-filter';
 import { describe, expect, it } from 'vitest';
-import {
-  EMPTY_FILTERS,
-  countByStatus,
-  countsForToggles,
-  filterSites,
-  isFiltered,
-  toggle,
-} from '../filters';
-import type { Site, SiteStatus, SiteTag } from '../data/types';
+import { SITE_FACETS, countByStatus, filterSites, searchPredicate } from './filters';
+import type { Site, SiteStatus, SiteTag } from './types';
 
 function site(
   id: string,
@@ -32,15 +26,14 @@ const sites: Site[] = [
   site('4', 'Basalte 004', 'ok', ['prioritaire'], 'Borne 40'),
 ];
 
-describe('filterSites', () => {
-  it('rend tout sans filtre', () => {
-    expect(filterSites(sites, EMPTY_FILTERS)).toHaveLength(4);
-    expect(isFiltered(EMPTY_FILTERS)).toBe(false);
-  });
+const select = (entries: Record<string, readonly string[]>): FacetSelection =>
+  Object.fromEntries(Object.entries(entries).map(([id, values]) => [id, new Set(values)]));
 
-  it('cherche sans tenir compte des accents ni de la casse', () => {
-    const trouve = (search: string) =>
-      filterSites(sites, { ...EMPTY_FILTERS, search }).map((s) => s.id);
+const ids = (items: readonly Site[]) => items.map((item) => item.id);
+
+describe('recherche', () => {
+  it('ignore les accents et la casse', () => {
+    const trouve = (query: string) => ids(filterSites(sites, EMPTY_SELECTION, query));
 
     expect(trouve('roseliere')).toEqual(['1']);
     expect(trouve('ROSELIÈRE')).toEqual(['1']);
@@ -49,63 +42,33 @@ describe('filterSites', () => {
   });
 
   it('cherche aussi dans le modèle', () => {
-    expect(filterSites(sites, { ...EMPTY_FILTERS, search: 'borne' }).map((s) => s.id)).toEqual([
-      '4',
-    ]);
+    expect(ids(filterSites(sites, EMPTY_SELECTION, 'borne'))).toEqual(['4']);
   });
 
-  it('un ensemble de statuts vide veut dire tous, pas aucun', () => {
-    expect(filterSites(sites, { ...EMPTY_FILTERS, statuses: new Set() })).toHaveLength(4);
-    expect(
-      filterSites(sites, { ...EMPTY_FILTERS, statuses: new Set(['ok'] as const) }).map((s) => s.id),
-    ).toEqual(['1', '4']);
-  });
-
-  it('retient un site portant au moins une des étiquettes demandées', () => {
-    const ids = filterSites(sites, {
-      ...EMPTY_FILTERS,
-      tags: new Set(['prioritaire'] as const),
-    }).map((s) => s.id);
-
-    expect(ids).toEqual(['3', '4']);
-  });
-
-  it('combine les trois filtres', () => {
-    const ids = filterSites(sites, {
-      search: 'a',
-      statuses: new Set(['ok'] as const),
-      tags: new Set(['prioritaire'] as const),
-    }).map((s) => s.id);
-
-    expect(ids).toEqual(['4']);
+  it('ne fabrique pas de prédicat pour un champ vide', () => {
+    expect(searchPredicate('   ')).toBeUndefined();
   });
 });
 
-describe('compteurs', () => {
-  it('compte par statut', () => {
-    expect(countByStatus(sites)).toEqual({ ok: 2, warning: 1, offline: 1 });
+describe('facettes du parc', () => {
+  it('lit le statut et les étiquettes là où ils sont', () => {
+    expect(ids(filterSites(sites, select({ status: ['ok'] })))).toEqual(['1', '4']);
+    expect(ids(filterSites(sites, select({ tags: ['prioritaire'] })))).toEqual(['3', '4']);
+  });
+
+  it('combine les facettes et la recherche', () => {
+    const resultat = filterSites(sites, select({ status: ['ok'], tags: ['prioritaire'] }), 'a');
+    expect(ids(resultat)).toEqual(['4']);
   });
 
   it('annonce ce qu un compteur ferait apparaître, pas ce qui est affiché', () => {
-    const filters = { ...EMPTY_FILTERS, statuses: new Set(['ok'] as const) };
+    const selection = select({ status: ['ok'] });
 
-    expect(countByStatus(filterSites(sites, filters))).toEqual({ ok: 2, warning: 0, offline: 0 });
-    expect(countsForToggles(sites, filters)).toEqual({ ok: 2, warning: 1, offline: 1 });
-  });
-
-  it('tient compte des autres filtres', () => {
-    const filters = { ...EMPTY_FILTERS, tags: new Set(['production'] as const) };
-    expect(countsForToggles(sites, filters)).toEqual({ ok: 1, warning: 0, offline: 1 });
-  });
-});
-
-describe('toggle', () => {
-  it('ajoute puis retire sans muter la source', () => {
-    const base = new Set(['ok'] as const);
-    const ajoute = toggle(base, 'offline');
-
-    expect([...ajoute].sort()).toEqual(['offline', 'ok']);
-    expect([...base]).toEqual(['ok']);
-    expect([...toggle(ajoute, 'ok')]).toEqual(['offline']);
+    expect(countByStatus(filterSites(sites, selection))).toEqual({ ok: 2, warning: 0, offline: 0 });
+    expect(facetCounts(sites, SITE_FACETS, selection)['status']).toEqual({
+      ok: 2,
+      warning: 1,
+      offline: 1,
+    });
   });
 });

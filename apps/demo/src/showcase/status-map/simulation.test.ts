@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createRandom } from '../data/random';
-import { generateSites } from '../data/generateSites';
-import { countByStatus } from '../filters';
-import { stepSimulation } from '../simulation';
-import type { Site } from '../data/types';
+import { createRandom } from '../../data/random';
+import { generateSites } from '../../data/generateSites';
+import { countByStatus } from '../../data/filters';
+import { stepSimulation } from './simulation';
+import type { Site } from '../../data/types';
 
 const NOW = Date.parse('2026-09-22T12:00:00.000Z');
 const parc = generateSites({ count: 240, seed: 42, now: new Date(NOW) });

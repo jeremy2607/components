@@ -37,6 +37,12 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-unsafe-assignment': 'off' },
   },
 
+  // Les scripts de build parlent à la console : c'est leur seule sortie.
+  {
+    files: ['apps/*/scripts/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
+
   {
     files: ['**/*.js'],
     languageOptions: { globals: globals.node },

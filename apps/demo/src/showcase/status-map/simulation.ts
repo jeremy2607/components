@@ -1,6 +1,6 @@
-import { lastContactFor } from './data/lastContact';
-import { weightedPick } from './data/random';
-import type { Site, SiteStatus } from './data/types';
+import { lastContactFor } from '../../data/lastContact';
+import { weightedPick } from '../../data/random';
+import type { Site, SiteStatus } from '../../data/types';
 
 /**
  * Un site en défaut retient plus l'attention qu'un site sain.

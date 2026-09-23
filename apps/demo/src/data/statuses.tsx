@@ -1,5 +1,5 @@
 import type { StatusRegistry } from '@jeremyprat/status-map';
-import type { SiteStatus } from './data/types';
+import type { SiteStatus } from './types';
 
 /*
  * Registre ouvert : ajouter un statut, c'est ajouter une entrée ici. Rien

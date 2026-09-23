@@ -3,13 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#06080d" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>status-map</title>
+
+    <title>components — bibliothèque de composants React</title>
     <meta
       name="description"
-      content="Carte de supervision d'un parc de sites géolocalisés, avec clustering coloré par sévérité."
+      content="Composants React publiables, tirés de projets réels : carte de supervision, filtre à facettes. Démos live, API documentée, décisions techniques expliquées."
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="components — bibliothèque de composants React" />
+    <meta
+      property="og:description"
+      content="Composants React publiables, tirés de projets réels. Démos live, API documentée, décisions techniques expliquées."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link
+      rel="preload"
+      href="/fonts/clash-display-600.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="preload" href="/fonts/switzer-400.woff2" as="font" type="font/woff2" crossorigin />
+
+    <style>
+      /* Le fond avant tout le reste : aucun éclair blanc au chargement. */
+      html {
+        background: #06080d;
+        color: #eaf0f7;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

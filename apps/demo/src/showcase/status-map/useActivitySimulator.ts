@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Site } from './data/types';
+import type { Site } from '../../data/types';
 import { stepSimulation } from './simulation';
 
 const DEFAULT_INTERVAL = 2000;

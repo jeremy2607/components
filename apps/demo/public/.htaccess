@@ -1,6 +1,16 @@
-# Déploiement statique. Les fichiers d'assets portent une empreinte dans leur
-# nom : ils sont immuables et peuvent être gardés longtemps. index.html, lui,
-# ne doit jamais être mis en cache, sinon un déploiement passe inaperçu.
+# Déploiement statique à la racine d'un domaine.
+#
+# Chaque composant a son propre index.html pré-rendu, donc les URL profondes
+# sont de vrais fichiers. La réécriture ci-dessous n'est qu'un filet pour les
+# routes qui n'en ont pas.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
 
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
@@ -11,6 +21,7 @@
   ExpiresByType text/html "access plus 0 seconds"
   ExpiresByType text/css "access plus 1 year"
   ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 7 days"
 </IfModule>
 
@@ -19,5 +30,8 @@
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.woff2$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 </IfModule>

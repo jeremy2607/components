@@ -4,8 +4,9 @@
     {
       "name": "demo",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "demo", "dev", "--port", "5173", "--strictPort"],
-      "port": 5173
+      "runtimeArgs": ["--filter", "demo", "dev"],
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }

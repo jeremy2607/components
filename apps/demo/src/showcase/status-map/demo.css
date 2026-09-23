@@ -1,117 +1,13 @@
-:root {
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --text: #172b4d;
-  --muted: #5e6c84;
-  --border: #e3e8ef;
-  --notice-warning-bg: #fff4e0;
-  --notice-warning-text: #8a5300;
-  --notice-error-bg: #ffe9eb;
-  --notice-error-text: #a01524;
-
-  --sm-map-bg: #e9edf2;
-  --sm-font: inherit;
-  --sm-attribution-bg: rgb(255 255 255 / 85%);
-  --sm-attribution-text: #5e6c84;
-  --sm-popup-bg: #ffffff;
-  --sm-popup-text: #172b4d;
-
-  color-scheme: light;
-}
-
 /*
- * Le mode système ne pose aucun attribut : la feuille suit
- * prefers-color-scheme toute seule, donc aucun écran n'attend le JavaScript
- * pour connaître sa couleur. Un choix explicite pose data-theme et l'emporte.
+ * Feuille de la démo carte. Les jetons (--bg, --text, --select-*, --sm-*)
+ * viennent de la galerie : cette feuille ne pose aucune couleur en dur, sauf
+ * les trois teintes de statut, qui sont de la donnée.
  */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0f151d;
-    --surface: #161d27;
-    --text: #e6ebf3;
-    --muted: #9aa8bd;
-    --border: #253040;
-    --notice-warning-bg: #3a2c12;
-    --notice-warning-text: #f2c879;
-    --notice-error-bg: #3b1a1f;
-    --notice-error-text: #ff9aa5;
-
-    --sm-map-bg: #1b2430;
-    --sm-attribution-bg: rgb(16 22 30 / 85%);
-    --sm-attribution-text: #9aa8bd;
-    --sm-popup-bg: #1d2733;
-    --sm-popup-text: #e6ebf3;
-
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #0f151d;
-  --surface: #161d27;
-  --text: #e6ebf3;
-  --muted: #9aa8bd;
-  --border: #253040;
-  --notice-warning-bg: #3a2c12;
-  --notice-warning-text: #f2c879;
-  --notice-error-bg: #3b1a1f;
-  --notice-error-text: #ff9aa5;
-
-  --sm-map-bg: #1b2430;
-  --sm-attribution-bg: rgb(16 22 30 / 85%);
-  --sm-attribution-text: #9aa8bd;
-  --sm-popup-bg: #1d2733;
-  --sm-popup-text: #e6ebf3;
-
-  color-scheme: dark;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
 
 .app {
   display: flex;
   height: 100%;
   flex-direction: column;
-}
-
-.app__header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.app__title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.app__tagline {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
 }
 
 .app__body {
@@ -140,6 +36,26 @@ body {
   flex-direction: column;
   border-right: 1px solid var(--border);
   background: var(--surface);
+
+  /*
+   * La démo vit dans un cadre de la galerie comme en plein écran. Ce qui doit
+   * disparaître quand la place manque n'est pas une question de taille
+   * d'écran, mais de hauteur du panneau : une requête de conteneur, pas une
+   * requête de média.
+   */
+  container-type: size;
+}
+
+@container (max-height: 33rem) {
+  .legend__rule {
+    display: none;
+  }
+}
+
+@container (max-height: 27rem) {
+  .legend {
+    display: none;
+  }
 }
 
 .panel__controls {
@@ -169,8 +85,8 @@ body {
 }
 
 .field__input:focus-visible {
-  border-color: var(--text);
-  outline: 2px solid var(--text);
+  border-color: var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: -1px;
 }
 
@@ -204,12 +120,12 @@ body {
 }
 
 .counter[aria-pressed='true'] {
-  border-color: var(--text);
-  background: var(--bg);
+  border-color: var(--select-bg);
+  background: var(--select-soft);
 }
 
 .counter:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
@@ -229,54 +145,6 @@ body {
 .counter__label {
   color: var(--muted);
   font-size: 11px;
-}
-
-.tags {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.tags__legend {
-  margin-bottom: 5px;
-  padding: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.tags__list {
-  display: flex;
-  margin: 0;
-  padding: 0;
-  flex-wrap: wrap;
-  gap: 5px;
-  list-style: none;
-}
-
-.tags__chip {
-  padding: 3px 9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.tags__chip:hover {
-  border-color: var(--muted);
-}
-
-.tags__chip[aria-pressed='true'] {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--surface);
-}
-
-.tags__chip:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 1px;
 }
 
 .panel__summary {
@@ -340,12 +208,12 @@ body {
 }
 
 .site[aria-current='true'] {
-  background: var(--text);
-  color: var(--surface);
+  background: var(--select-bg);
+  color: var(--select-text);
 }
 
 .site:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
 
@@ -401,24 +269,11 @@ body {
    * L'en-tête doit rester une bande, pas un bloc : sur un téléphone, chaque
    * ligne qu'il prend est une ligne de moins pour la carte.
    */
-  .app__header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 12px 14px;
-  }
-
-  .app__title {
-    font-size: 17px;
-  }
-
-  .app__tagline {
-    font-size: 12px;
-  }
-
-  .app__aside {
+  .app__toolbar {
     flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 8px 12px;
+    padding: 10px 14px;
   }
 
   .app__count {
@@ -440,16 +295,8 @@ body {
 }
 
 @media (max-width: 560px) {
-  .app__tagline {
-    display: none;
-  }
-
   .sim__toggle {
     padding: 6px 11px;
-  }
-
-  .theme__option {
-    padding: 4px 9px;
   }
 
   .panel__controls {
@@ -457,11 +304,14 @@ body {
   }
 }
 
-.app__header {
+.app__toolbar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .app__count {
@@ -507,18 +357,12 @@ body {
 }
 
 .notice__dismiss:hover {
-  background: rgb(0 0 0 / 8%);
+  background: rgb(255 255 255 / 10%);
 }
 
 .notice__dismiss:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 1px;
-}
-
-.app__aside {
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .app__selection {
@@ -540,8 +384,8 @@ body {
   padding: 3px 10px;
   border: 0;
   border-radius: 999px;
-  background: var(--text);
-  color: var(--surface);
+  background: var(--select-bg);
+  color: var(--select-text);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -618,11 +462,11 @@ body {
 }
 
 .popup__action:hover {
-  border-color: var(--text);
+  border-color: var(--select-bg);
 }
 
 .popup__action:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
@@ -654,13 +498,13 @@ body {
 }
 
 .sim__toggle[aria-pressed='true'] {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--surface);
+  border-color: var(--select-bg);
+  background: var(--select-bg);
+  color: var(--select-text);
 }
 
 .sim__toggle:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -715,46 +559,7 @@ body {
   white-space: nowrap;
 }
 
-/* --- Thème, légende, chargement --- */
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.theme {
-  display: flex;
-  margin: 0;
-  padding: 2px;
-  gap: 2px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-}
-
-.theme__option {
-  padding: 4px 11px;
-  border: 0;
-  border-radius: 999px;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.theme__option[aria-pressed='true'] {
-  background: var(--text);
-  color: var(--surface);
-}
-
-.theme__option:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 1px;
-}
+/* --- Légende, chargement --- */
 
 .legend {
   padding: 12px 16px;
@@ -889,4 +694,35 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+}
+
+/* --- Filtre à facettes : habillage du paquet --- */
+
+.panel__controls .ff-group__legend {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.panel__controls .ff-chip {
+  --ff-border: var(--border);
+  --ff-border-hover: var(--muted);
+  --ff-chip-text: var(--muted);
+  --ff-selected-border: var(--select-bg);
+  --ff-selected-bg: var(--select-bg);
+  --ff-selected-text: var(--select-text);
+  --ff-focus: var(--focus);
+
+  font-size: 11px;
+}
+
+/*
+ * Le fond de carte, assombri.
+ *
+ * L'inversion rend les terres sombres et les libellés clairs ; la rotation de
+ * teinte remet l'eau en bleu plutôt qu'en orange. Le filtre ne touche que la
+ * couche de tuiles : marqueurs, regroupements et bulle sont dans d'autres
+ * panneaux Leaflet et gardent leurs couleurs.
+ */
+.tiles-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(0.82) saturate(0.45);
 }

@@ -1,6 +1,8 @@
 import type { StatusItem } from '@jeremyprat/status-map';
 
-export type SiteStatus = 'ok' | 'warning' | 'offline';
+export const SITE_STATUSES = ['ok', 'warning', 'offline'] as const;
+
+export type SiteStatus = (typeof SITE_STATUSES)[number];
 
 export const SITE_TAGS = ['production', 'préproduction', 'maintenance', 'prioritaire'] as const;
 
