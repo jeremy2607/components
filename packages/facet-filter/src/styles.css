@@ -1,0 +1,66 @@
+/*
+ * Apparence par défaut, entièrement pilotable par variables. Aucune couleur
+ * n'est écrite en dur : les valeurs de repli servent à voir quelque chose dans
+ * une page vierge, pas à imposer un thème.
+ */
+
+.ff-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ff-group__legend {
+  margin-bottom: var(--ff-gap, 6px);
+  padding: 0;
+  color: var(--ff-muted, #6b7280);
+  font-size: var(--ff-legend-size, 12px);
+}
+
+.ff-group__list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: var(--ff-gap, 6px);
+  list-style: none;
+}
+
+.ff-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--ff-chip-padding, 3px 10px);
+  border: 1px solid var(--ff-border, #d4d4d8);
+  border-radius: var(--ff-radius, 999px);
+  background: var(--ff-chip-bg, transparent);
+  color: var(--ff-chip-text, inherit);
+  font: inherit;
+  font-size: var(--ff-chip-size, 12px);
+  cursor: pointer;
+}
+
+.ff-chip:hover:not(:disabled) {
+  border-color: var(--ff-border-hover, #71717a);
+}
+
+.ff-chip:focus-visible {
+  outline: 2px solid var(--ff-focus, currentColor);
+  outline-offset: 2px;
+}
+
+.ff-chip[aria-pressed='true'] {
+  border-color: var(--ff-selected-border, currentColor);
+  background: var(--ff-selected-bg, currentColor);
+  color: var(--ff-selected-text, canvas);
+}
+
+.ff-chip:disabled {
+  cursor: default;
+  opacity: var(--ff-disabled-opacity, 0.4);
+}
+
+.ff-chip__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
