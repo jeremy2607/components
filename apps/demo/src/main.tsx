@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 // Animations de regroupement. MarkerCluster.Default.css n'est pas importé :
 // c'est l'apparence par défaut du greffon, que status-map remplace.
 import 'leaflet.markercluster/dist/MarkerCluster.css';

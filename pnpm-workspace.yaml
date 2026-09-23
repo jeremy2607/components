@@ -7,3 +7,4 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - jsdom@30.1.1
+  - maplibre-gl@6.11.0

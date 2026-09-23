@@ -9,5 +9,7 @@ export default defineConfig({
    * donc rien ne dépend d'un chemin absolu.
    */
   base: './',
+  // MapLibre crée son worker en module : l'empaqueteur doit en produire un.
+  worker: { format: 'es' },
   build: { sourcemap: true },
 });
